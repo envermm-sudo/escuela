@@ -91,3 +91,122 @@ def directivo_o_superuser_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return _wrapped
+
+
+# ================================================================
+# Helpers de jerarquía de roles
+# ================================================================
+
+def es_dueno(user):
+    """True si el usuario es el dueño del sistema (superuser)."""
+    return user.is_authenticated and user.is_superuser
+
+
+def es_directivo(user):
+    """True si tiene rol 'directivo' (independiente del preceptor)."""
+    perfil = get_perfil_docente(user)
+    return perfil is not None and perfil.rol == 'directivo'
+
+
+def es_preceptor(user):
+    """True si tiene rol 'preceptor'."""
+    perfil = get_perfil_docente(user)
+    return perfil is not None and perfil.rol == 'preceptor'
+
+
+def es_docente(user):
+    """True si tiene rol 'docente'."""
+    perfil = get_perfil_docente(user)
+    return perfil is not None and perfil.rol == 'docente'
+
+
+# ================================================================
+# Permisos sobre gestión de personal
+# ================================================================
+
+def puede_gestionar_personal(user):
+    """
+    True si el usuario puede entrar a la sección de gestión de personal.
+    Solo dueños y directivos.
+    """
+    if not user.is_authenticated or not user.is_staff:
+        return False
+    return es_dueno(user) or es_directivo(user)
+
+
+def puede_crear_rol(user, rol_objetivo):
+    """
+    True si 'user' puede crear un personal con el rol 'rol_objetivo'.
+    rol_objetivo: 'docente', 'preceptor', 'directivo', 'dueno'
+    """
+    if not puede_gestionar_personal(user):
+        return False
+    if rol_objetivo == 'dueno':
+        return es_dueno(user)
+    # Todos los demás roles los puede crear tanto dueño como directivo
+    return rol_objetivo in ('docente', 'preceptor', 'directivo')
+
+
+def puede_ver_perfil(user, perfil):
+    """
+    True si 'user' puede ver al 'perfil' en los listados de personal.
+    Regla principal: los directivos NO ven a los dueños.
+    """
+    if not user.is_authenticated or not user.is_staff:
+        return False
+    if es_dueno(user):
+        return True
+    # Directivo no ve al dueño
+    if perfil.user.is_superuser:
+        return False
+    return puede_gestionar_personal(user)
+
+
+def puede_editar_perfil(user, perfil):
+    """
+    True si 'user' puede editar al 'perfil' dado.
+    - Dueño edita a cualquiera.
+    - Directivo edita a directivos, preceptores y docentes (no a dueños).
+    - Cualquiera puede editar su propio perfil vía 'mi perfil' (esto NO es ahí).
+    """
+    if not puede_gestionar_personal(user):
+        return False
+    if es_dueno(user):
+        return True
+    # Directivo: no puede editar a un dueño
+    if perfil.user.is_superuser:
+        return False
+    return True
+
+
+def puede_eliminar_perfil(user, perfil):
+    """
+    True si 'user' puede eliminar al 'perfil' dado.
+    - Dueño elimina a cualquiera (con confirmación reforzada si es a sí mismo o a otro dueño).
+    - Directivo elimina a directivos, preceptores, docentes — NUNCA a dueños.
+    - Nadie puede eliminarse a sí mismo si es directivo (regla de seguridad: solo el dueño puede).
+    """
+    if not puede_gestionar_personal(user):
+        return False
+    # Nadie puede eliminar a un dueño excepto otro dueño
+    if perfil.user.is_superuser:
+        return es_dueno(user) and perfil.user_id != user.id
+    if es_dueno(user):
+        return True
+    # Directivo no puede eliminarse a sí mismo (debe pedírselo al dueño)
+    if perfil.user_id == user.id:
+        return False
+    return True
+
+
+def filtrar_personal_visible(queryset, user):
+    """
+    Filtra un queryset de PerfilDocente para que el usuario solo vea lo que
+    le corresponde según las reglas.
+    Para directivos: excluye a los usuarios superuser.
+    Para dueños: muestra todo.
+    """
+    if es_dueno(user):
+        return queryset
+    # Directivos: ocultar dueños
+    return queryset.exclude(user__is_superuser=True)
