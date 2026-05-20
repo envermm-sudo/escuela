@@ -686,6 +686,7 @@ def mi_perfil_view(request):
         perfil.titulo = request.POST.get('titulo', '').strip()[:120]
         perfil.telefono = request.POST.get('telefono', '').strip()[:30]
         perfil.dni = request.POST.get('dni', '').strip()[:20]
+        perfil.notif_mensajeria_email = request.POST.get('notif_mensajeria_email') == 'on'
 
         # Foto nueva
         nueva_foto = request.FILES.get('foto')
@@ -1546,12 +1547,18 @@ def mensaje_conversacion(request, pk):
         if accion == 'enviar':
             texto = request.POST.get('texto', '').strip()
             if texto:
-                MensajeInterno.objects.create(
+                nuevo_msg = MensajeInterno.objects.create(
                     conversacion=conversacion,
                     autor=request.user,
                     texto=texto,
                 )
                 conversacion.save(update_fields=['actualizada'])
+                # Notificar por email a quienes lo tengan activado (async)
+                from comunicacion.emails import notificar_mensaje_interno
+                try:
+                    notificar_mensaje_interno(nuevo_msg)
+                except Exception:
+                    pass
             return redirect('staff:mensaje_conversacion', pk=pk)
 
         elif accion == 'eliminar_mensaje':

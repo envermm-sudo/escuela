@@ -269,3 +269,49 @@ def notificar_respuesta_al_padre(consulta):
         html_body=html_body,
         to_emails=padre.email,
     )
+
+
+# ====================================================================
+# Notificación de mensaje interno del staff
+# ====================================================================
+def notificar_mensaje_interno(mensaje):
+    """
+    Avisa por email a los miembros de la conversación (excepto el autor)
+    que tengan activado notif_mensajeria_email en su PerfilDocente.
+    """
+    from django.urls import reverse
+
+    conversacion = mensaje.conversacion
+    miembros = (
+        conversacion.miembros
+        .filter(activo=True)
+        .exclude(usuario=mensaje.autor)
+        .select_related('usuario')
+    )
+
+    link = (
+        settings.SITE_URL.rstrip('/')
+        + reverse('staff:mensaje_conversacion', args=[conversacion.pk])
+    )
+    autor_nombre = mensaje.autor.get_full_name() or mensaje.autor.username
+
+    for miembro in miembros:
+        usuario = miembro.usuario
+        if not usuario.email or not usuario.is_active:
+            continue
+        # Chequear el interruptor del PerfilDocente
+        perfil = getattr(usuario, 'perfil_docente', None)
+        if perfil is None or not getattr(perfil, 'notif_mensajeria_email', False):
+            continue
+
+        ctx = dict(contexto_email_base())
+        ctx.update({
+            'autor_nombre': autor_nombre,
+            'link': link,
+        })
+        html_body = render_to_string('emails/mensaje_interno.html', ctx)
+        enviar_email_async(
+            subject=f'Nuevo mensaje de {autor_nombre}',
+            html_body=html_body,
+            to_emails=usuario.email,
+        )
