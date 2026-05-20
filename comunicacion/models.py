@@ -134,6 +134,10 @@ class PerfilDocente(models.Model):
         default=False,
         help_text='Permite crear, editar y eliminar materias y grados.'
     )
+    notif_mensajeria_email = models.BooleanField(
+        default=False,
+        help_text='Si está activo, recibe un email cuando le llega un mensaje interno.'
+    )
 
     def get_iniciales(self):
         """Devuelve las iniciales (max 2) del docente para usar como avatar."""
@@ -537,3 +541,101 @@ class MensajeConsulta(models.Model):
     def __str__(self):
         quien = 'Docente' if self.es_del_docente else 'Padre'
         return f'{quien} — {self.creado:%d/%m/%Y %H:%M}'
+
+
+# ====================================================================
+# Mensajería interna del staff
+# ====================================================================
+class Conversacion(models.Model):
+    """Contenedor de una conversación interna: directa (1 a 1) o grupo."""
+    TIPO_CHOICES = [
+        ('directa', 'Directa (1 a 1)'),
+        ('grupo', 'Grupo'),
+    ]
+
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='directa')
+    nombre = models.CharField(
+        max_length=120,
+        blank=True,
+        default='',
+        help_text='Nombre del grupo. Vacío para conversaciones directas.',
+    )
+    creador = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='conversaciones_creadas',
+        help_text='Quién creó la conversación. En grupos, es el administrador.',
+    )
+    creada = models.DateTimeField(auto_now_add=True)
+    actualizada = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Conversación interna'
+        verbose_name_plural = 'Conversaciones internas'
+        ordering = ['-actualizada']
+
+    def __str__(self):
+        if self.tipo == 'grupo':
+            return f'Grupo: {self.nombre or "(sin nombre)"}'
+        return f'Conversación directa #{self.pk}'
+
+
+class MiembroConversacion(models.Model):
+    """Vincula un usuario del staff a una conversación."""
+    conversacion = models.ForeignKey(
+        Conversacion,
+        on_delete=models.CASCADE,
+        related_name='miembros',
+    )
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='conversaciones',
+    )
+    ultima_lectura = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Última vez que el usuario abrió esta conversación. Para contar no leídos.',
+    )
+    activo = models.BooleanField(
+        default=True,
+        help_text='False si el usuario se salió del grupo. Conserva el historial.',
+    )
+    se_unio = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Miembro de conversación'
+        verbose_name_plural = 'Miembros de conversación'
+        unique_together = ('conversacion', 'usuario')
+
+    def __str__(self):
+        return f'{self.usuario.get_full_name() or self.usuario.username} en {self.conversacion}'
+
+
+class MensajeInterno(models.Model):
+    """Cada mensaje dentro de una conversación interna."""
+    conversacion = models.ForeignKey(
+        Conversacion,
+        on_delete=models.CASCADE,
+        related_name='mensajes',
+    )
+    autor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='mensajes_internos',
+    )
+    texto = models.TextField()
+    eliminado = models.BooleanField(
+        default=False,
+        help_text='Si el autor lo eliminó. Se muestra como "mensaje eliminado".',
+    )
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Mensaje interno'
+        verbose_name_plural = 'Mensajes internos'
+        ordering = ['creado']
+
+    def __str__(self):
+        return f'{self.autor.get_full_name() or self.autor.username} — {self.creado:%d/%m/%Y %H:%M}'
