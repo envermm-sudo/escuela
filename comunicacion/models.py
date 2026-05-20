@@ -202,6 +202,10 @@ class Comunicado(models.Model):
         default=False,
         help_text='Comunicado de la institución (director). Sin materia, dirigido a la escuela.'
     )
+    archivado = models.BooleanField(
+        default=False,
+        help_text='Si está archivado, no se muestra en ningún lado pero no se borra de la base.'
+    )
     fecha_vencimiento = models.DateField(null=True, blank=True, help_text='Solo para tareas con plazo')
     ocultar_al_vencer = models.BooleanField(
         default=False,
@@ -454,3 +458,82 @@ class HijoPadre(models.Model):
 
     def __str__(self):
         return f'{self.nombre} ({self.grado})'
+
+
+# ====================================================================
+# Consultas de padres sobre comunicados
+# ====================================================================
+class ConsultaComunicado(models.Model):
+    """
+    Hilo privado de consulta entre UN padre y el docente autor de un comunicado.
+    Es privado: solo lo ven ese padre y ese docente. Los directivos no acceden.
+    """
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('respondida', 'Respondida'),
+    ]
+
+    comunicado = models.ForeignKey(
+        Comunicado,
+        on_delete=models.CASCADE,
+        related_name='consultas',
+    )
+    padre = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='consultas_realizadas',
+        help_text='El padre/tutor que abrió la consulta.',
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='pendiente',
+    )
+    archivada = models.BooleanField(
+        default=False,
+        help_text='Se archiva junto con el comunicado. El padre ya no puede escribir.',
+    )
+    creada = models.DateTimeField(auto_now_add=True)
+    actualizada = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Consulta de comunicado'
+        verbose_name_plural = 'Consultas de comunicados'
+        ordering = ['-actualizada']
+        unique_together = ('comunicado', 'padre')
+
+    def __str__(self):
+        return f'Consulta de {self.padre.get_full_name() or self.padre.username} sobre "{self.comunicado.titulo}"'
+
+
+class MensajeConsulta(models.Model):
+    """Cada mensaje individual dentro de un hilo de consulta."""
+    consulta = models.ForeignKey(
+        ConsultaComunicado,
+        on_delete=models.CASCADE,
+        related_name='mensajes',
+    )
+    autor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='mensajes_consulta',
+    )
+    es_del_docente = models.BooleanField(
+        default=False,
+        help_text='True si lo escribió el docente, False si lo escribió el padre.',
+    )
+    texto = models.TextField()
+    eliminado = models.BooleanField(
+        default=False,
+        help_text='Si el docente lo eliminó por moderación. Se muestra como "mensaje eliminado".',
+    )
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Mensaje de consulta'
+        verbose_name_plural = 'Mensajes de consulta'
+        ordering = ['creado']
+
+    def __str__(self):
+        quien = 'Docente' if self.es_del_docente else 'Padre'
+        return f'{quien} — {self.creado:%d/%m/%Y %H:%M}'
