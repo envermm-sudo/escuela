@@ -99,5 +99,36 @@
     {% endif %}
   </article>
 
+  <!-- Seccion de consultas -->
+  <div class="mt-5 bg-white border border-gray-200 rounded-2xl p-5 sm:p-6">
+    <h2 class="font-semibold text-gray-900 mb-1">💬 Tenés una consulta?</h2>
+    {% if request.user.is_authenticated and request.user.perfil_padre %}
+      <p class="text-sm text-gray-600 mb-3">
+        Podes escribirle al docente directamente sobre este comunicado.
+        Es una conversacion privada entre vos y el docente.
+      </p>
+      <a href="{% url 'comunicacion:consulta_hilo' comunicado.pk %}"
+         class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+        Hacer una consulta
+      </a>
+    {% elif request.user.is_authenticated and request.user.is_staff %}
+      <p class="text-sm text-gray-500">Las consultas son una funcion para las familias.</p>
+    {% else %}
+      <p class="text-sm text-gray-600 mb-3">
+        Para consultarle al docente sobre este comunicado necesitas una cuenta de familia.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'comunicacion:login_padre' %}"
+           class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+          Iniciar sesion
+        </a>
+        <a href="{% url 'comunicacion:registro_padre' %}"
+           class="inline-flex items-center gap-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg">
+          Registrarme
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}

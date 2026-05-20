@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Consulta — {{ comunicado.titulo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-6">
+
+  <div class="mb-4">
+    <a href="{% url 'comunicacion:comunicado_detalle' comunicado.pk %}"
+       class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">← Volver al comunicado</a>
+  </div>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="mb-3 rounded-md border px-4 py-3 text-sm
+                  {% if m.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
+                  {% elif m.tags == 'error' %}bg-red-50 border-red-200 text-red-800
+                  {% else %}bg-slate-50 border-slate-200 text-slate-700{% endif %}">
+        {{ m }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6">
+    <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Consulta sobre</p>
+    <h1 class="text-lg font-bold text-gray-900 mb-1">{{ comunicado.titulo }}</h1>
+    {% if consulta %}
+      <p class="text-xs text-gray-500 mb-4">
+        Estado:
+        {% if consulta.estado == 'pendiente' %}
+          <span class="text-amber-700 font-semibold">Pendiente de respuesta</span>
+        {% else %}
+          <span class="text-emerald-700 font-semibold">Respondida</span>
+        {% endif %}
+      </p>
+    {% else %}
+      <p class="text-sm text-gray-600 mb-4">Todavia no escribiste ninguna consulta sobre este comunicado. Escribi abajo para empezar.</p>
+    {% endif %}
+
+    <!-- Hilo de mensajes -->
+    <div class="space-y-3 mb-4">
+      {% for msg in mensajes_hilo %}
+        <div class="flex {% if msg.es_del_docente %}justify-start{% else %}justify-end{% endif %}">
+          <div class="max-w-[80%] rounded-2xl px-4 py-2 text-sm
+                      {% if msg.es_del_docente %}bg-gray-100 text-gray-800{% else %}bg-indigo-600 text-white{% endif %}">
+            {% if msg.eliminado %}
+              <span class="italic opacity-70">Mensaje eliminado</span>
+            {% else %}
+              <p class="whitespace-pre-line">{{ msg.texto }}</p>
+            {% endif %}
+            <p class="text-[10px] mt-1 {% if msg.es_del_docente %}text-gray-400{% else %}text-indigo-200{% endif %}">
+              {% if msg.es_del_docente %}Docente{% else %}Vos{% endif %} · {{ msg.creado|date:"d/m H:i" }}
+            </p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Form para escribir -->
+    {% if consulta and consulta.archivada %}
+      <p class="text-sm text-gray-500 italic border-t border-gray-100 pt-4">
+        Esta consulta esta archivada porque el comunicado ya no esta activo.
+      </p>
+    {% else %}
+      <form method="post" class="border-t border-gray-100 pt-4">
+        {% csrf_token %}
+        <textarea name="texto" rows="3" required
+                  placeholder="Escribi tu consulta..."
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"></textarea>
+        <div class="flex justify-end mt-2">
+          <button type="submit"
+                  class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+            Enviar consulta
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

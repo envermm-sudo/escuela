@@ -9,6 +9,7 @@ urlpatterns = [
     path('grado/<slug:grado_slug>/galerias/', views.galerias_grado_view, name='galerias_grado'),
     path('galeria/<int:pk>/', views.galeria_detalle_publica_view, name='galeria_detalle_publica'),
     path('comunicado/<int:pk>/', views.comunicado_detalle_view, name='comunicado_detalle'),
+    path('comunicado/<int:pk>/consulta/', views.consulta_hilo_view, name='consulta_hilo'),
     path('registro/', views.registro_padre_view, name='registro_padre'),
     path('login/', views.login_padre_view, name='login_padre'),
     path('logout/', views.logout_view, name='logout'),

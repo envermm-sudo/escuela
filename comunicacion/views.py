@@ -589,3 +589,70 @@ def desuscribirme_view(request, token):
         'perfil': perfil,
         'token': token,
     })
+
+
+# ====================================================================
+# CONSULTAS DE PADRES SOBRE COMUNICADOS
+# ====================================================================
+@login_required(login_url='comunicacion:login_padre')
+def consulta_hilo_view(request, pk):
+    """
+    Hilo de consulta de un padre sobre un comunicado.
+    - Si el padre no tiene hilo aun sobre este comunicado, lo crea al primer mensaje.
+    - Muestra el hilo completo y permite agregar mensajes.
+    - Solo accesible para padres registrados (con perfil_padre).
+    """
+    from .models import ConsultaComunicado, MensajeConsulta
+
+    comunicado = get_object_or_404(Comunicado, pk=pk, activo=True, archivado=False)
+
+    # Verificar que sea un padre registrado
+    perfil_padre = getattr(request.user, 'perfil_padre', None)
+    if perfil_padre is None:
+        messages.error(request, 'Las consultas son solo para familias registradas.')
+        return redirect('comunicacion:comunicado_detalle', pk=pk)
+
+    # Buscar el hilo existente de este padre sobre este comunicado
+    consulta = ConsultaComunicado.objects.filter(
+        comunicado=comunicado,
+        padre=request.user,
+    ).first()
+
+    if request.method == 'POST':
+        texto = request.POST.get('texto', '').strip()
+        if not texto:
+            messages.error(request, 'Escribi tu consulta antes de enviar.')
+        else:
+            # Crear el hilo si todavia no existe
+            if consulta is None:
+                consulta = ConsultaComunicado.objects.create(
+                    comunicado=comunicado,
+                    padre=request.user,
+                    estado='pendiente',
+                )
+            # Si el hilo estaba archivado, no permitir escribir
+            if consulta.archivada:
+                messages.error(request, 'Esta consulta esta archivada. No se pueden enviar mas mensajes.')
+                return redirect('comunicacion:consulta_hilo', pk=pk)
+
+            MensajeConsulta.objects.create(
+                consulta=consulta,
+                autor=request.user,
+                es_del_docente=False,
+                texto=texto,
+            )
+            # Al escribir el padre, el hilo vuelve a pendiente
+            consulta.estado = 'pendiente'
+            consulta.save(update_fields=['estado', 'actualizada'])
+            messages.success(request, 'Tu consulta fue enviada al docente.')
+            return redirect('comunicacion:consulta_hilo', pk=pk)
+
+    mensajes_hilo = []
+    if consulta is not None:
+        mensajes_hilo = consulta.mensajes.select_related('autor').order_by('creado')
+
+    return render(request, 'comunicacion/consulta_hilo.html', {
+        'comunicado': comunicado,
+        'consulta': consulta,
+        'mensajes_hilo': mensajes_hilo,
+    })
