@@ -35,7 +35,7 @@
     <!-- Hilo de mensajes -->
     <div id="hilo-mensajes" class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
       {% for msg in mensajes_hilo %}
-      <div class="flex {% if msg.autor_id == request.user.id %}justify-end{% else %}justify-start{% endif %}">
+      <div class="flex {% if msg.autor_id == request.user.id %}justify-end{% else %}justify-start{% endif %}" data-msg-id="{{ msg.id }}">
         <div class="max-w-[80%]">
           {% if es_grupo and msg.autor_id != request.user.id %}
           <p class="text-[10px] text-gray-400 mb-0.5 px-1">{{ msg.autor.get_full_name|default:msg.autor.username }}</p>
@@ -82,10 +82,81 @@
 </div>
 
 <script>
-  // Scroll automático al último mensaje
-  (function() {
-    var hilo = document.getElementById('hilo-mensajes');
-    if (hilo) { hilo.scrollTop = hilo.scrollHeight; }
-  })();
+(function() {
+  var hilo = document.getElementById('hilo-mensajes');
+  if (hilo) { hilo.scrollTop = hilo.scrollHeight; }
+
+  var convId = {{ conversacion.pk }};
+  var urlJson = "{% url 'staff:mensaje_conversacion_json' conversacion.pk %}";
+  var soyMiEmail = "";
+
+  // Obtener el id del último mensaje ya mostrado
+  function ultimoIdMostrado() {
+    var nodos = hilo.querySelectorAll('[data-msg-id]');
+    if (!nodos.length) return 0;
+    return parseInt(nodos[nodos.length - 1].getAttribute('data-msg-id'), 10) || 0;
+  }
+
+  // Dibujar un mensaje nuevo en el hilo
+  function dibujarMensaje(m, esGrupo) {
+    var wrap = document.createElement('div');
+    wrap.className = 'flex ' + (m.es_mio ? 'justify-end' : 'justify-start');
+    wrap.setAttribute('data-msg-id', m.id);
+
+    var cont = document.createElement('div');
+    cont.className = 'max-w-[80%]';
+
+    if (esGrupo && !m.es_mio) {
+      var autor = document.createElement('p');
+      autor.className = 'text-[10px] text-gray-400 mb-0.5 px-1';
+      autor.textContent = m.autor;
+      cont.appendChild(autor);
+    }
+
+    var burbuja = document.createElement('div');
+    burbuja.className = 'rounded-2xl px-4 py-2 text-sm ' +
+      (m.es_mio ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800');
+
+    if (m.eliminado) {
+      var elim = document.createElement('span');
+      elim.className = 'italic opacity-70';
+      elim.textContent = 'Mensaje eliminado';
+      burbuja.appendChild(elim);
+    } else {
+      var p = document.createElement('p');
+      p.className = 'whitespace-pre-line';
+      p.textContent = m.texto;
+      burbuja.appendChild(p);
+      var hora = document.createElement('span');
+      hora.className = 'text-[10px] block mt-1 ' + (m.es_mio ? 'text-indigo-200' : 'text-gray-400');
+      hora.textContent = m.hora;
+      burbuja.appendChild(hora);
+    }
+
+    cont.appendChild(burbuja);
+    wrap.appendChild(cont);
+    hilo.appendChild(wrap);
+  }
+
+  // Consultar mensajes nuevos
+  function consultarNuevos() {
+    var desde = ultimoIdMostrado();
+    fetch(urlJson + '?desde=' + desde, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.mensajes || !data.mensajes.length) return;
+        var estabaAbajo = (hilo.scrollHeight - hilo.scrollTop - hilo.clientHeight) < 60;
+        data.mensajes.forEach(function(m) { dibujarMensaje(m, data.es_grupo); });
+        if (estabaAbajo) { hilo.scrollTop = hilo.scrollHeight; }
+      })
+      .catch(function() { /* silencioso */ });
+  }
+
+  // Marcar los mensajes que ya vienen del servidor con data-msg-id
+  // (esto se hace agregando el atributo en el HTML; ver más abajo)
+
+  // Polling cada 4 segundos
+  setInterval(consultarNuevos, 4000);
+})();
 </script>
 {% endblock %}

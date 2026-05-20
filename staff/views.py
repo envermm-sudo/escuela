@@ -1712,3 +1712,47 @@ def mensaje_gestionar_miembros(request, pk):
         'miembros_actuales': miembros_actuales,
         'disponibles': disponibles,
     })
+
+
+@staff_required
+def mensaje_conversacion_json(request, pk):
+    """
+    Endpoint JSON para polling: devuelve los mensajes de la conversación.
+    Acepta ?desde=<id> para devolver solo mensajes con id mayor a ese.
+    """
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from comunicacion.models import Conversacion, MiembroConversacion
+
+    conversacion = get_object_or_404(Conversacion, pk=pk)
+
+    membresia = MiembroConversacion.objects.filter(
+        conversacion=conversacion,
+        usuario=request.user,
+        activo=True,
+    ).first()
+    if membresia is None:
+        return JsonResponse({'error': 'sin_acceso'}, status=403)
+
+    qs = conversacion.mensajes.select_related('autor').order_by('creado')
+    desde = request.GET.get('desde', '')
+    if desde.isdigit():
+        qs = qs.filter(id__gt=int(desde))
+
+    es_grupo = conversacion.tipo == 'grupo'
+    data = []
+    for m in qs:
+        data.append({
+            'id': m.id,
+            'texto': '' if m.eliminado else m.texto,
+            'eliminado': m.eliminado,
+            'es_mio': m.autor_id == request.user.id,
+            'autor': m.autor.get_full_name() or m.autor.username,
+            'hora': timezone.localtime(m.creado).strftime('%d/%m %H:%M'),
+        })
+
+    # Actualizar última lectura
+    membresia.ultima_lectura = timezone.now()
+    membresia.save(update_fields=['ultima_lectura'])
+
+    return JsonResponse({'mensajes': data, 'es_grupo': es_grupo})
