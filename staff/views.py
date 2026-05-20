@@ -1033,11 +1033,18 @@ def gestion_personal_lista(request):
     if rol_filtro in ('docente', 'preceptor', 'directivo'):
         qs = qs.filter(rol=rol_filtro)
 
+    # Materializar el queryset y anotar cada perfil con sus permisos para la UI
+    personal_lista = list(qs)
+    for p in personal_lista:
+        p.puede_editar = puede_editar_perfil(request.user, p)
+        p.puede_eliminar = puede_eliminar_perfil(request.user, p)
+        p.es_uno_mismo = (p.user_id == request.user.id)
+
     return render(request, 'staff/personal_lista.html', {
-        'personal': qs,
+        'personal': personal_lista,
         'busqueda': busqueda,
         'rol_filtro': rol_filtro,
-        'cant_total': qs.count(),
+        'cant_total': len(personal_lista),
         'es_gestor': es_gestor,
     })
 
@@ -1230,15 +1237,29 @@ def gestion_personal_eliminar(request, pk):
         return redirect('staff:personal_lista')
 
     if request.method == 'POST':
+        # Caso especial: el dueño se elimina a sí mismo — exigir confirmación tipeada
+        if perfil.user_id == request.user.id and request.user.is_superuser:
+            confirmacion = request.POST.get('confirmacion_username', '').strip()
+            if confirmacion != request.user.username:
+                messages.error(
+                    request,
+                    'Para auto-eliminarte tenés que escribir tu username exacto en el cuadro de confirmación.'
+                )
+                return redirect('staff:gestion_personal_eliminar', pk=perfil.pk)
+
         nombre = f'{perfil.user.first_name} {perfil.user.last_name}'
         # Borrar el User asociado (cascade borra el PerfilDocente y las asignaciones)
         perfil.user.delete()
         messages.success(request, f'{nombre} eliminado/a del sistema.')
         return redirect('staff:personal_lista')
 
+    es_auto_eliminacion = (perfil.user_id == request.user.id and request.user.is_superuser)
+
     return render(request, 'staff/gestion/personal_eliminar.html', {
         'perfil': perfil,
         'cant_asignaciones': perfil.asignaciones.count(),
+        'es_auto_eliminacion': es_auto_eliminacion,
+        'username_requerido': request.user.username if es_auto_eliminacion else '',
     })
 
 

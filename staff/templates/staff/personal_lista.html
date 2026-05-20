@@ -70,6 +70,7 @@
           <td class="px-4 py-2 text-gray-600 text-xs">{{ p.user.email }}</td>
           <td class="px-4 py-2 text-center text-gray-700">{{ p.asignaciones.count }}</td>
           <td class="px-4 py-2 text-right whitespace-nowrap">
+            {% if p.puede_editar %}
             <a href="{% url 'staff:gestion_personal_matriz' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-medium" title="Asignar materias y grados">
               🎓 Materias
             </a>
@@ -79,9 +80,15 @@
             <a href="{% url 'staff:gestion_personal_reset_password' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded text-xs font-medium ml-1" title="Resetear contraseña">
               🔑
             </a>
+            {% endif %}
+            {% if p.puede_eliminar %}
             <a href="{% url 'staff:gestion_personal_eliminar' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded text-xs font-medium ml-1" title="Eliminar">
               🗑️
             </a>
+            {% endif %}
+            {% if not p.puede_editar and not p.puede_eliminar %}
+            <span class="text-xs text-gray-400 italic">Sin acciones disponibles</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
