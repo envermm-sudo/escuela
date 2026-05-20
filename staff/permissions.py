@@ -210,3 +210,84 @@ def filtrar_personal_visible(queryset, user):
         return queryset
     # Directivos: ocultar dueños
     return queryset.exclude(user__is_superuser=True)
+
+
+# ================================================================
+# Permisos extra opcionales
+# ================================================================
+
+# Defaults por rol — qué permisos vienen tildados al crear o al cambiar de rol.
+DEFAULTS_PERMISOS_POR_ROL = {
+    'directivo': {
+        'puede_publicar_institucional': True,
+        'puede_administrar_galerias_globales': True,
+        'puede_ver_auditoria': True,
+        'puede_editar_configuracion_portal': True,
+        'puede_administrar_materias_grados': True,
+    },
+    'preceptor': {
+        'puede_publicar_institucional': False,
+        'puede_administrar_galerias_globales': True,
+        'puede_ver_auditoria': False,
+        'puede_editar_configuracion_portal': False,
+        'puede_administrar_materias_grados': False,
+    },
+    'docente': {
+        'puede_publicar_institucional': False,
+        'puede_administrar_galerias_globales': False,
+        'puede_ver_auditoria': False,
+        'puede_editar_configuracion_portal': False,
+        'puede_administrar_materias_grados': False,
+    },
+}
+
+
+def aplicar_defaults_permisos_por_rol(perfil):
+    """
+    Aplica los defaults de permisos extra según el rol del perfil.
+    Sobrescribe los valores actuales. Útil al crear o al cambiar de rol.
+    NO guarda el perfil — el caller debe hacer perfil.save().
+    """
+    defaults = DEFAULTS_PERMISOS_POR_ROL.get(perfil.rol, {})
+    for campo, valor in defaults.items():
+        setattr(perfil, campo, valor)
+
+
+def _chequear_flag_o_dueno(user, nombre_flag):
+    """
+    Helper interno: True si user es dueño, o si su PerfilDocente tiene el flag
+    indicado en True.
+    """
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    perfil = get_perfil_docente(user)
+    if perfil is None:
+        return False
+    return getattr(perfil, nombre_flag, False)
+
+
+def puede_publicar_institucional(user):
+    """True si el usuario puede publicar avisos institucionales."""
+    return _chequear_flag_o_dueno(user, 'puede_publicar_institucional')
+
+
+def puede_administrar_galerias_globales(user):
+    """True si el usuario puede administrar galerías no atadas a un aula."""
+    return _chequear_flag_o_dueno(user, 'puede_administrar_galerias_globales')
+
+
+def puede_ver_auditoria(user):
+    """True si el usuario puede acceder al log de auditoría."""
+    return _chequear_flag_o_dueno(user, 'puede_ver_auditoria')
+
+
+def puede_editar_configuracion_portal(user):
+    """True si el usuario puede editar la configuración del portal."""
+    return _chequear_flag_o_dueno(user, 'puede_editar_configuracion_portal')
+
+
+def puede_administrar_materias_grados(user):
+    """True si el usuario puede crear/editar materias y grados."""
+    return _chequear_flag_o_dueno(user, 'puede_administrar_materias_grados')

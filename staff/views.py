@@ -20,6 +20,7 @@ from .permissions import (
     puede_editar_perfil,
     puede_eliminar_perfil,
     filtrar_personal_visible,
+    aplicar_defaults_permisos_por_rol,
 )
 
 
@@ -1156,6 +1157,9 @@ def gestion_personal_form(request, pk=None):
         user.save()
 
         # ----- Crear o actualizar el PerfilDocente -----
+        es_creacion = not perfil
+        rol_anterior = perfil.rol if perfil else None
+
         if not perfil:
             perfil = PerfilDocente(user=user)
         else:
@@ -1167,6 +1171,12 @@ def gestion_personal_form(request, pk=None):
         perfil.telefono = telefono
         perfil.fecha_ingreso = fecha_ingreso
         perfil.observaciones = observaciones
+
+        # Aplicar defaults de permisos por rol:
+        # - al crear: siempre.
+        # - al editar: solo si cambió el rol respecto a lo que estaba guardado.
+        if es_creacion or rol != rol_anterior:
+            aplicar_defaults_permisos_por_rol(perfil)
 
         if eliminar_foto:
             perfil.foto = None
