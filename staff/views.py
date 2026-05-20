@@ -12,7 +12,15 @@ from comunicacion.models import Comunicado, Galeria, ImagenComunicado, TIPO_COMU
 from comunicacion.utils import convertir_a_webp
 from .forms import ComunicadoForm
 from .plantillas_comunicado import PLANTILLAS_COMUNICADO, get_plantilla
-from .permissions import es_directivo_o_preceptor, es_directivo_o_superuser, get_perfil_docente, staff_required
+from .permissions import (
+    es_directivo_o_preceptor,
+    es_directivo_o_superuser,
+    get_perfil_docente,
+    staff_required,
+    puede_editar_perfil,
+    puede_eliminar_perfil,
+    filtrar_personal_visible,
+)
 
 
 # ================================================================
@@ -1011,6 +1019,7 @@ def gestion_personal_lista(request):
     rol_filtro = request.GET.get('rol', '').strip()
     es_gestor = es_directivo_o_superuser(request.user)
     qs = PerfilDocente.objects.select_related('user').order_by('user__last_name', 'user__first_name')
+    qs = filtrar_personal_visible(qs, request.user)
 
     if busqueda:
         qs = qs.filter(
@@ -1041,6 +1050,9 @@ def gestion_personal_form(request, pk=None):
     perfil = None
     if pk:
         perfil = get_object_or_404(PerfilDocente.objects.select_related('user'), pk=pk)
+        if not puede_editar_perfil(request.user, perfil):
+            messages.error(request, 'No tenés permisos para editar a este usuario.')
+            return redirect('staff:personal_lista')
 
     if request.method == 'POST':
         # ----- Datos del User -----
@@ -1181,6 +1193,9 @@ def gestion_personal_form(request, pk=None):
 @directivo_o_superuser_required
 def gestion_personal_reset_password(request, pk):
     perfil = get_object_or_404(PerfilDocente.objects.select_related('user'), pk=pk)
+    if not puede_editar_perfil(request.user, perfil):
+        messages.error(request, 'No tenés permisos para resetear la contraseña de este usuario.')
+        return redirect('staff:personal_lista')
     if request.method == 'POST':
         perfil.user.set_password(PASSWORD_RESET_DEFAULT)
         perfil.user.save(update_fields=['password'])
@@ -1204,6 +1219,16 @@ def gestion_personal_reset_password(request, pk):
 @directivo_o_superuser_required
 def gestion_personal_eliminar(request, pk):
     perfil = get_object_or_404(PerfilDocente.objects.select_related('user'), pk=pk)
+    if not puede_eliminar_perfil(request.user, perfil):
+        # Mensaje específico según el caso
+        if perfil.user.is_superuser:
+            messages.error(request, 'No se puede eliminar al dueño del sistema.')
+        elif perfil.user_id == request.user.id:
+            messages.error(request, 'No podés eliminarte a vos mismo. Pedile al dueño del sistema que lo haga.')
+        else:
+            messages.error(request, 'No tenés permisos para eliminar a este usuario.')
+        return redirect('staff:personal_lista')
+
     if request.method == 'POST':
         nombre = f'{perfil.user.first_name} {perfil.user.last_name}'
         # Borrar el User asociado (cascade borra el PerfilDocente y las asignaciones)
@@ -1223,7 +1248,10 @@ def gestion_personal_eliminar(request, pk):
 @directivo_o_superuser_required
 def gestion_personal_matriz(request, pk):
     """Matriz de checkboxes Materias × Grados, igual a la del admin pero en /staff/."""
-    perfil = get_object_or_404(PerfilDocente, pk=pk)
+    perfil = get_object_or_404(PerfilDocente.objects.select_related('user'), pk=pk)
+    if not puede_editar_perfil(request.user, perfil):
+        messages.error(request, 'No tenés permisos para asignar materias/grados a este usuario.')
+        return redirect('staff:personal_lista')
     grados = list(Grado.objects.filter(activo=True).order_by('orden', 'nombre', 'turno'))
     materias = list(Materia.objects.all().order_by('nombre'))
     if request.method == 'POST':
