@@ -108,6 +108,33 @@ class PerfilDocente(models.Model):
         help_text='Notas internas del director (no son visibles para el docente ni para padres).'
     )
 
+    # ================================================================
+    # Permisos extra opcionales (los habilita el directivo o el dueño)
+    # Por defecto vienen en False; las funciones helper en
+    # staff/permissions.py aplican defaults razonables por rol cuando
+    # el flag está en su valor inicial.
+    # ================================================================
+    puede_publicar_institucional = models.BooleanField(
+        default=False,
+        help_text='Permite publicar avisos institucionales dirigidos a toda la escuela.'
+    )
+    puede_administrar_galerias_globales = models.BooleanField(
+        default=False,
+        help_text='Permite subir fotos a galerías no atadas a un aula específica.'
+    )
+    puede_ver_auditoria = models.BooleanField(
+        default=False,
+        help_text='Permite acceder al log de auditoría del sistema.'
+    )
+    puede_editar_configuracion_portal = models.BooleanField(
+        default=False,
+        help_text='Permite editar logo, portada y mensajes generales del portal.'
+    )
+    puede_administrar_materias_grados = models.BooleanField(
+        default=False,
+        help_text='Permite crear, editar y eliminar materias y grados.'
+    )
+
     def get_iniciales(self):
         """Devuelve las iniciales (max 2) del docente para usar como avatar."""
         nombre = (self.user.first_name or self.user.username or '?').strip()
