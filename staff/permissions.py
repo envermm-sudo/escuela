@@ -291,3 +291,68 @@ def puede_editar_configuracion_portal(user):
 def puede_administrar_materias_grados(user):
     """True si el usuario puede crear/editar materias y grados."""
     return _chequear_flag_o_dueno(user, 'puede_administrar_materias_grados')
+
+
+# ================================================================
+# Decoradores basados en permisos extra
+# ================================================================
+
+def _decorador_permiso(funcion_chequeo, mensaje_error):
+    """
+    Fabrica un decorador que solo deja pasar si funcion_chequeo(user) es True.
+    Si no, redirige al dashboard con un mensaje.
+    """
+    def decorador(view_func):
+        @wraps(view_func)
+        def _wrapped(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('staff:login')
+            if not request.user.is_staff:
+                messages.error(request, 'Esta sección es solo para personal de la escuela.')
+                return redirect('comunicacion:landing')
+            if not funcion_chequeo(request.user):
+                messages.error(request, mensaje_error)
+                return redirect('staff:dashboard')
+            return view_func(request, *args, **kwargs)
+        return _wrapped
+    return decorador
+
+
+def permiso_institucional_required(view_func):
+    """Requiere permiso para publicar avisos institucionales."""
+    return _decorador_permiso(
+        puede_publicar_institucional,
+        'No tenés permiso para publicar avisos institucionales.'
+    )(view_func)
+
+
+def permiso_galerias_globales_required(view_func):
+    """Requiere permiso para administrar galerías globales."""
+    return _decorador_permiso(
+        puede_administrar_galerias_globales,
+        'No tenés permiso para administrar galerías globales.'
+    )(view_func)
+
+
+def permiso_auditoria_required(view_func):
+    """Requiere permiso para ver la auditoría."""
+    return _decorador_permiso(
+        puede_ver_auditoria,
+        'No tenés permiso para ver el registro de auditoría.'
+    )(view_func)
+
+
+def permiso_configuracion_required(view_func):
+    """Requiere permiso para editar la configuración del portal."""
+    return _decorador_permiso(
+        puede_editar_configuracion_portal,
+        'No tenés permiso para editar la configuración del portal.'
+    )(view_func)
+
+
+def permiso_materias_grados_required(view_func):
+    """Requiere permiso para administrar materias y grados."""
+    return _decorador_permiso(
+        puede_administrar_materias_grados,
+        'No tenés permiso para administrar materias y grados.'
+    )(view_func)

@@ -22,6 +22,10 @@ from .permissions import (
     filtrar_personal_visible,
     aplicar_defaults_permisos_por_rol,
     DEFAULTS_PERMISOS_POR_ROL,
+    permiso_institucional_required,
+    permiso_auditoria_required,
+    permiso_configuracion_required,
+    permiso_materias_grados_required,
 )
 
 
@@ -736,11 +740,8 @@ from comunicacion.models import ConfiguracionPortal
 # ================================================================
 # CONFIGURACION DEL PORTAL (solo directivo y superuser)
 # ================================================================
-@staff_required
+@permiso_configuracion_required
 def configuracion_portal_view(request):
-    if not (request.user.is_superuser or es_directivo_o_preceptor(request.user)):
-        messages.error(request, 'Solo los directivos pueden acceder a la configuración.')
-        return redirect('staff:dashboard')
     config, _ = ConfiguracionPortal.objects.get_or_create(pk=1)
 
     if request.method == 'POST':
@@ -774,13 +775,9 @@ def configuracion_portal_view(request):
 # ================================================================
 # AUDITORIA (solo directivo y superuser)
 # ================================================================
-@staff_required
+@permiso_auditoria_required
 def auditoria_view(request):
     from comunicacion.models import AuditLog
-    if not (request.user.is_superuser or es_directivo_o_preceptor(request.user)):
-        messages.error(request, 'Solo los directivos pueden ver el registro de auditoría.')
-        return redirect('staff:dashboard')
-
     logs = AuditLog.objects.select_related('usuario').order_by('-timestamp')[:200]
     return render(request, 'staff/auditoria.html', {'logs': logs})
 
@@ -803,14 +800,14 @@ def gestion_dashboard(request):
 
 
 # ----- Materias -----
-@directivo_o_superuser_required
+@permiso_materias_grados_required
 def gestion_materias_lista(request):
     from comunicacion.models import Materia
     materias = Materia.objects.all().order_by('nombre')
     return render(request, 'staff/gestion/materias_lista.html', {'materias': materias})
 
 
-@directivo_o_superuser_required
+@permiso_materias_grados_required
 def gestion_materia_form(request, pk=None):
     from comunicacion.models import Materia
     materia = get_object_or_404(Materia, pk=pk) if pk else None
@@ -843,7 +840,7 @@ def gestion_materia_form(request, pk=None):
     })
 
 
-@directivo_o_superuser_required
+@permiso_materias_grados_required
 def gestion_materia_eliminar(request, pk):
     from comunicacion.models import Materia
     materia = get_object_or_404(Materia, pk=pk)
@@ -856,14 +853,14 @@ def gestion_materia_eliminar(request, pk):
 
 
 # ----- Grados -----
-@directivo_o_superuser_required
+@permiso_materias_grados_required
 def gestion_grados_lista(request):
     from comunicacion.models import Grado
     grados = Grado.objects.all().order_by('orden', 'nombre', 'turno')
     return render(request, 'staff/gestion/grados_lista.html', {'grados': grados})
 
 
-@directivo_o_superuser_required
+@permiso_materias_grados_required
 def gestion_grado_form(request, pk=None):
     from comunicacion.models import Grado
     import re
@@ -919,7 +916,7 @@ def gestion_grado_form(request, pk=None):
     })
 
 
-@directivo_o_superuser_required
+@permiso_materias_grados_required
 def gestion_grado_eliminar(request, pk):
     from comunicacion.models import Grado
     grado = get_object_or_404(Grado, pk=pk)
@@ -944,7 +941,7 @@ def gestion_docentes_admin_link(request):
 # ================================================================
 # COMUNICADO INSTITUCIONAL
 # ================================================================
-@directivo_o_superuser_required
+@permiso_institucional_required
 def comunicado_institucional_crear(request):
     """Comunicado del director sin materia, dirigido a toda la escuela o grados específicos."""
     from comunicacion.models import Grado
