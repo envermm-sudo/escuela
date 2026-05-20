@@ -1360,3 +1360,105 @@ def gestion_personal_matriz(request, pk):
         'filas': filas,
         'cant_actuales': len(actuales),
     })
+
+
+# ================================================================
+# CONSULTAS DE PADRES (bandeja del docente)
+# ================================================================
+def _consultas_visibles(user):
+    """Queryset de consultas que el usuario puede ver."""
+    from comunicacion.models import ConsultaComunicado
+    qs = ConsultaComunicado.objects.select_related(
+        'comunicado', 'padre'
+    ).order_by('-actualizada')
+    if user.is_superuser:
+        return qs
+    return qs.filter(comunicado__autor=user)
+
+
+@staff_required
+def consultas_lista(request):
+    """Lista de consultas para el docente (o todas, si es dueño)."""
+    perfil = get_perfil_docente(request.user)
+    if not request.user.is_superuser and perfil and perfil.rol in ('directivo', 'preceptor'):
+        messages.error(request, 'Las consultas las gestiona el docente autor de cada comunicado.')
+        return redirect('staff:dashboard')
+
+    consultas = _consultas_visibles(request.user)
+    filtro = request.GET.get('estado', '').strip()
+    if filtro in ('pendiente', 'respondida'):
+        consultas = consultas.filter(estado=filtro)
+
+    consultas = list(consultas)
+    for c in consultas:
+        c.ultimo_mensaje = c.mensajes.order_by('-creado').first()
+        c.cant_mensajes = c.mensajes.count()
+
+    cant_pendientes = _consultas_visibles(request.user).filter(estado='pendiente').count()
+
+    return render(request, 'staff/consultas_lista.html', {
+        'consultas': consultas,
+        'filtro': filtro,
+        'cant_pendientes': cant_pendientes,
+        'cant_total': len(consultas),
+    })
+
+
+@staff_required
+def consulta_detalle(request, pk):
+    """Detalle de un hilo de consulta: responder, cambiar estado, moderar."""
+    from comunicacion.models import ConsultaComunicado, MensajeConsulta
+
+    consulta = get_object_or_404(
+        ConsultaComunicado.objects.select_related('comunicado', 'padre'),
+        pk=pk,
+    )
+
+    if not request.user.is_superuser and consulta.comunicado.autor_id != request.user.id:
+        messages.error(request, 'No tenés acceso a esta consulta.')
+        return redirect('staff:consultas_lista')
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', '')
+
+        if accion == 'responder':
+            texto = request.POST.get('texto', '').strip()
+            if not texto:
+                messages.error(request, 'Escribí una respuesta antes de enviar.')
+            else:
+                MensajeConsulta.objects.create(
+                    consulta=consulta,
+                    autor=request.user,
+                    es_del_docente=True,
+                    texto=texto,
+                )
+                consulta.estado = 'respondida'
+                consulta.save(update_fields=['estado', 'actualizada'])
+                messages.success(request, 'Respuesta enviada.')
+            return redirect('staff:consulta_detalle', pk=pk)
+
+        elif accion == 'cambiar_estado':
+            nuevo = request.POST.get('estado', '')
+            if nuevo in ('pendiente', 'respondida'):
+                consulta.estado = nuevo
+                consulta.save(update_fields=['estado', 'actualizada'])
+                messages.success(request, f'Estado cambiado a "{nuevo}".')
+            return redirect('staff:consulta_detalle', pk=pk)
+
+        elif accion == 'eliminar_mensaje':
+            msg_id = request.POST.get('mensaje_id', '')
+            MensajeConsulta.objects.filter(id=msg_id, consulta=consulta).update(eliminado=True)
+            messages.success(request, 'Mensaje eliminado.')
+            return redirect('staff:consulta_detalle', pk=pk)
+
+        elif accion == 'eliminar_hilo':
+            consulta.delete()
+            messages.success(request, 'Conversación eliminada por completo.')
+            return redirect('staff:consultas_lista')
+
+    mensajes_hilo = consulta.mensajes.select_related('autor').order_by('creado')
+
+    return render(request, 'staff/consulta_detalle.html', {
+        'consulta': consulta,
+        'mensajes_hilo': mensajes_hilo,
+    })

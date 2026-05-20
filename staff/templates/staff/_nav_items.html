@@ -16,6 +16,13 @@
   <span>🖼️</span> Galerías
 </a>
 
+<a href="{% url 'staff:consultas_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/consultas' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>💬</span> Consultas
+  {% if consultas_pendientes_count %}
+  <span class="ml-auto bg-amber-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{{ consultas_pendientes_count }}</span>
+  {% endif %}
+</a>
+
 {% if perfil_actual and perfil_actual.rol == 'docente' %}
 <a href="{{ url_asig }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/asignaciones' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
   <span>🎓</span> Mis asignaciones

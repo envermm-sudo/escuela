@@ -35,6 +35,10 @@ urlpatterns = [
     path('configuracion/', views.configuracion_portal_view, name='configuracion'),
     path('auditoria/', views.auditoria_view, name='auditoria'),
 
+    # Consultas de padres
+    path('consultas/', views.consultas_lista, name='consultas_lista'),
+    path('consultas/<int:pk>/', views.consulta_detalle, name='consulta_detalle'),
+
     # Gestión (director/superuser)
     path('gestion/', views.gestion_dashboard, name='gestion_dashboard'),
 
