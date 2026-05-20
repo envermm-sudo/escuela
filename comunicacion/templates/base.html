@@ -109,7 +109,10 @@
                     <a href="{% url 'comunicacion:registro_padre' %}" class="ml-3 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">Registrarme</a>
                 {% elif request.user.is_staff %}
                     <span class="text-sm text-gray-700">Hola, {% if request.user.first_name %}{{ request.user.first_name }}{% else %}usuario{% endif %} 👋</span>
-                    <a href="/admin/" class="ml-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium">Ir al admin →</a>
+                    <a href="{% url 'staff:dashboard' %}" class="ml-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium">Panel del staff →</a>
+                    {% if request.user.is_superuser %}
+                    <a href="/admin/" class="ml-3 text-xs text-gray-400 hover:text-gray-600">admin</a>
+                    {% endif %}
                     <a href="{% url 'comunicacion:logout' %}" class="ml-3 text-sm text-gray-500 hover:text-gray-700">Salir</a>
                 {% else %}
                     <span class="text-sm text-gray-700">Hola, {% if request.user.first_name %}{{ request.user.first_name }}{% else %}usuario{% endif %} 👋</span>

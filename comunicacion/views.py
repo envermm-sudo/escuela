@@ -179,10 +179,13 @@ def login_padre_view(request):
             user_auth = authenticate(request, username=user_obj.username, password=password)
             if user_auth is not None:
                 auth_login(request, user_auth)
-                messages.success(request, f'¡Hola, {user_auth.first_name or user_auth.username}!')
-                # Si es staff, mandarlo al admin
                 if user_auth.is_staff:
-                    return redirect('/admin/')
+                    messages.success(
+                        request,
+                        f'¡Hola, {user_auth.first_name or user_auth.username}! Te llevamos al panel del personal.'
+                    )
+                    return redirect('staff:dashboard')
+                messages.success(request, f'¡Hola, {user_auth.first_name or user_auth.username}!')
                 return redirect('comunicacion:landing')
             else:
                 error = 'Contraseña incorrecta.'

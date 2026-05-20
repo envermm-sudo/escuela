@@ -37,6 +37,12 @@ def login_view(request):
                 auth_login(request, user_auth)
                 return redirect('staff:dashboard')
             error = 'Contraseña incorrecta.'
+        elif user_obj and not user_obj.is_staff:
+            # Existe el usuario pero es un padre — orientarlo a la puerta correcta
+            error = (
+                'Esta entrada es solo para personal de la escuela. '
+                'Si sos un padre/madre, ingresá por la página de login de familias.'
+            )
         else:
             error = 'No existe una cuenta de personal con ese correo o usuario.'
 
