@@ -1434,6 +1434,12 @@ def consulta_detalle(request, pk):
                 )
                 consulta.estado = 'respondida'
                 consulta.save(update_fields=['estado', 'actualizada'])
+                # Notificar al padre por email (async, no bloquea)
+                from comunicacion.emails import notificar_respuesta_al_padre
+                try:
+                    notificar_respuesta_al_padre(consulta)
+                except Exception:
+                    pass
                 messages.success(request, 'Respuesta enviada.')
             return redirect('staff:consulta_detalle', pk=pk)
 

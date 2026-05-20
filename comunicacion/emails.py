@@ -204,3 +204,68 @@ def notificar_comunicado_a_padres(comunicado):
 
     logger.info('Notificación de comunicado %s disparada a %s padres', comunicado.pk, enviados)
     return enviados
+
+
+# ====================================================================
+# Notificaciones de consultas de padres
+# ====================================================================
+def notificar_consulta_al_docente(consulta):
+    """Avisa al docente autor del comunicado que un padre escribió una consulta."""
+    from django.urls import reverse
+
+    docente = consulta.comunicado.autor
+    if not docente or not docente.email:
+        return
+    if not docente.is_active:
+        return
+
+    link = (
+        settings.SITE_URL.rstrip('/')
+        + reverse('staff:consulta_detalle', args=[consulta.pk])
+    )
+    ctx = dict(contexto_email_base())
+    ctx.update({
+        'consulta': consulta,
+        'comunicado': consulta.comunicado,
+        'padre': consulta.padre,
+        'link': link,
+    })
+    html_body = render_to_string('emails/consulta_nueva_docente.html', ctx)
+    enviar_email_async(
+        subject=f'Nueva consulta sobre "{consulta.comunicado.titulo}"',
+        html_body=html_body,
+        to_emails=docente.email,
+    )
+
+
+def notificar_respuesta_al_padre(consulta):
+    """Avisa al padre que el docente respondió su consulta. Respeta sus preferencias."""
+    from django.urls import reverse
+
+    padre = consulta.padre
+    if not padre or not padre.email or not padre.is_active:
+        return
+
+    perfil_padre = getattr(padre, 'perfil_padre', None)
+    if perfil_padre is not None:
+        if not perfil_padre.notif_email:
+            return
+        if perfil_padre.tipo_notificacion == 'ninguno':
+            return
+
+    link = (
+        settings.SITE_URL.rstrip('/')
+        + reverse('comunicacion:consulta_hilo', args=[consulta.comunicado.pk])
+    )
+    ctx = dict(contexto_email_base())
+    ctx.update({
+        'consulta': consulta,
+        'comunicado': consulta.comunicado,
+        'link': link,
+    })
+    html_body = render_to_string('emails/consulta_respuesta_padre.html', ctx)
+    enviar_email_async(
+        subject=f'El docente respondió tu consulta sobre "{consulta.comunicado.titulo}"',
+        html_body=html_body,
+        to_emails=padre.email,
+    )

@@ -435,6 +435,8 @@ def galeria_detalle_publica_view(request, pk):
 @login_required(login_url='comunicacion:login_padre')
 def mi_cuenta_padre_view(request):
     """Página principal donde el padre edita sus datos, hijos y notificaciones."""
+    from .models import ConsultaComunicado
+
     try:
         perfil = request.user.perfil_padre
     except PerfilPadre.DoesNotExist:
@@ -470,10 +472,17 @@ def mi_cuenta_padre_view(request):
         return redirect('comunicacion:mi_cuenta')
 
     hijos = perfil.hijos.select_related('grado').order_by('nombre')
+    consultas_padre = (
+        ConsultaComunicado.objects
+        .filter(padre=request.user)
+        .select_related('comunicado')
+        .order_by('-actualizada')
+    )
     return render(request, 'comunicacion/mi_cuenta.html', {
         'perfil': perfil,
         'hijos': hijos,
         'opciones_notif': NOTIF_PADRE_CHOICES,
+        'consultas_padre': consultas_padre,
     })
 
 
@@ -644,6 +653,12 @@ def consulta_hilo_view(request, pk):
             # Al escribir el padre, el hilo vuelve a pendiente
             consulta.estado = 'pendiente'
             consulta.save(update_fields=['estado', 'actualizada'])
+            # Notificar al docente por email (async, no bloquea)
+            from .emails import notificar_consulta_al_docente
+            try:
+                notificar_consulta_al_docente(consulta)
+            except Exception:
+                pass
             messages.success(request, 'Tu consulta fue enviada al docente.')
             return redirect('comunicacion:consulta_hilo', pk=pk)
 

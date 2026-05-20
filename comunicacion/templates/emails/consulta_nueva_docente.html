@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f3f4f6; padding:20px; margin:0;">
+  <div style="max-width:520px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+    <div style="background:#4f46e5; padding:20px 24px;">
+      <h1 style="color:#ffffff; font-size:18px; margin:0;">Nueva consulta de una familia</h1>
+    </div>
+    <div style="padding:24px;">
+      <p style="color:#374151; font-size:14px; margin:0 0 12px;">
+        {{ padre.get_full_name|default:padre.username }} te escribió una consulta sobre el comunicado:
+      </p>
+      <p style="color:#111827; font-size:15px; font-weight:bold; margin:0 0 16px;">
+        {{ comunicado.titulo }}
+      </p>
+      <a href="{{ link }}" style="display:inline-block; background:#4f46e5; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:bold;">
+        Ver y responder la consulta
+      </a>
+      <p style="color:#9ca3af; font-size:12px; margin:20px 0 0;">
+        {{ nombre_institucion }}
+      </p>
+    </div>
+  </div>
+</body>
+</html>
