@@ -23,6 +23,13 @@
   {% endif %}
 </a>
 
+<a href="{% url 'staff:mensajes_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/mensajes' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>✉️</span> Mensajes
+  {% if mensajes_no_leidos_count %}
+  <span class="ml-auto bg-indigo-600 text-white text-xs font-bold rounded-full px-2 py-0.5">{{ mensajes_no_leidos_count }}</span>
+  {% endif %}
+</a>
+
 {% if perfil_actual and perfil_actual.rol == 'docente' %}
 <a href="{{ url_asig }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/asignaciones' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
   <span>🎓</span> Mis asignaciones

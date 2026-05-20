@@ -1468,3 +1468,125 @@ def consulta_detalle(request, pk):
         'consulta': consulta,
         'mensajes_hilo': mensajes_hilo,
     })
+
+
+# ================================================================
+# MENSAJERIA INTERNA DEL STAFF
+# ================================================================
+def _nombre_conversacion(conversacion, para_usuario):
+    """Devuelve el nombre a mostrar: el del grupo, o el del otro participante."""
+    if conversacion.tipo == 'grupo':
+        return conversacion.nombre or 'Grupo sin nombre'
+    otro = (
+        conversacion.miembros
+        .exclude(usuario=para_usuario)
+        .select_related('usuario')
+        .first()
+    )
+    if otro:
+        return otro.usuario.get_full_name() or otro.usuario.username
+    return 'Conversación'
+
+
+@staff_required
+def mensajes_lista(request):
+    """Lista de conversaciones del usuario."""
+    from comunicacion.models import MiembroConversacion
+
+    membresias = (
+        MiembroConversacion.objects
+        .filter(usuario=request.user, activo=True)
+        .select_related('conversacion')
+        .order_by('-conversacion__actualizada')
+    )
+
+    conversaciones = []
+    for m in membresias:
+        conv = m.conversacion
+        ultimo = conv.mensajes.order_by('-creado').first()
+        # Contar no leídos: mensajes después de la última lectura, de otros autores
+        qs_nuevos = conv.mensajes.exclude(autor=request.user)
+        if m.ultima_lectura:
+            qs_nuevos = qs_nuevos.filter(creado__gt=m.ultima_lectura)
+        no_leidos = qs_nuevos.count()
+
+        conversaciones.append({
+            'conv': conv,
+            'nombre': _nombre_conversacion(conv, request.user),
+            'ultimo': ultimo,
+            'no_leidos': no_leidos,
+        })
+
+    return render(request, 'staff/mensajes_lista.html', {
+        'conversaciones': conversaciones,
+    })
+
+
+@staff_required
+def mensaje_conversacion(request, pk):
+    """Ver una conversación: hilo de mensajes + escribir."""
+    from django.utils import timezone
+    from comunicacion.models import Conversacion, MiembroConversacion, MensajeInterno
+
+    conversacion = get_object_or_404(Conversacion, pk=pk)
+
+    # Verificar que el usuario sea miembro activo
+    membresia = MiembroConversacion.objects.filter(
+        conversacion=conversacion,
+        usuario=request.user,
+        activo=True,
+    ).first()
+    if membresia is None:
+        messages.error(request, 'No tenés acceso a esta conversación.')
+        return redirect('staff:mensajes_lista')
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', 'enviar')
+
+        if accion == 'enviar':
+            texto = request.POST.get('texto', '').strip()
+            if texto:
+                MensajeInterno.objects.create(
+                    conversacion=conversacion,
+                    autor=request.user,
+                    texto=texto,
+                )
+                conversacion.save(update_fields=['actualizada'])
+            return redirect('staff:mensaje_conversacion', pk=pk)
+
+        elif accion == 'eliminar_mensaje':
+            msg_id = request.POST.get('mensaje_id', '')
+            # Solo puede borrar SUS PROPIOS mensajes
+            MensajeInterno.objects.filter(
+                id=msg_id,
+                conversacion=conversacion,
+                autor=request.user,
+            ).update(eliminado=True)
+            return redirect('staff:mensaje_conversacion', pk=pk)
+
+        elif accion == 'salir_grupo':
+            if conversacion.tipo == 'grupo':
+                membresia.activo = False
+                membresia.save(update_fields=['activo'])
+                messages.success(request, 'Saliste del grupo.')
+            return redirect('staff:mensajes_lista')
+
+    # Marcar como leído (actualizar ultima_lectura)
+    membresia.ultima_lectura = timezone.now()
+    membresia.save(update_fields=['ultima_lectura'])
+
+    mensajes_hilo = conversacion.mensajes.select_related('autor').order_by('creado')
+    miembros = (
+        conversacion.miembros
+        .filter(activo=True)
+        .select_related('usuario')
+    )
+
+    return render(request, 'staff/mensaje_conversacion.html', {
+        'conversacion': conversacion,
+        'nombre_conv': _nombre_conversacion(conversacion, request.user),
+        'mensajes_hilo': mensajes_hilo,
+        'miembros': miembros,
+        'es_grupo': conversacion.tipo == 'grupo',
+        'soy_creador': conversacion.creador_id == request.user.id,
+    })

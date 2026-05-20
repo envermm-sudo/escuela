@@ -1,0 +1,85 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}{{ nombre_conv }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+  <div class="mb-4 flex items-center justify-between">
+    <a href="{% url 'staff:mensajes_lista' %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver a mensajes</a>
+    {% if es_grupo %}
+    <form method="post" onsubmit="return confirm('¿Salir de este grupo?');">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="salir_grupo">
+      <button type="submit" class="text-xs text-red-600 hover:text-red-800 underline">Salir del grupo</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+    <!-- Encabezado -->
+    <div class="px-5 py-3 border-b border-gray-100 bg-gray-50">
+      <p class="font-semibold text-gray-900">{{ nombre_conv }}</p>
+      {% if es_grupo %}
+      <p class="text-xs text-gray-500">
+        {{ miembros|length }} miembro{{ miembros|length|pluralize:"s" }}:
+        {% for m in miembros %}{{ m.usuario.get_full_name|default:m.usuario.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- Hilo de mensajes -->
+    <div id="hilo-mensajes" class="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+      {% for msg in mensajes_hilo %}
+      <div class="flex {% if msg.autor_id == request.user.id %}justify-end{% else %}justify-start{% endif %}">
+        <div class="max-w-[80%]">
+          {% if es_grupo and msg.autor_id != request.user.id %}
+          <p class="text-[10px] text-gray-400 mb-0.5 px-1">{{ msg.autor.get_full_name|default:msg.autor.username }}</p>
+          {% endif %}
+          <div class="rounded-2xl px-4 py-2 text-sm
+                      {% if msg.autor_id == request.user.id %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-800{% endif %}">
+            {% if msg.eliminado %}
+              <span class="italic opacity-70">Mensaje eliminado</span>
+            {% else %}
+              <p class="whitespace-pre-line">{{ msg.texto }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] {% if msg.autor_id == request.user.id %}text-indigo-200{% else %}text-gray-400{% endif %}">
+                  {{ msg.creado|date:"d/m H:i" }}
+                </span>
+                {% if msg.autor_id == request.user.id %}
+                <form method="post" class="inline" onsubmit="return confirm('¿Eliminar este mensaje?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="accion" value="eliminar_mensaje">
+                  <input type="hidden" name="mensaje_id" value="{{ msg.id }}">
+                  <button type="submit" class="text-[10px] underline text-indigo-200">eliminar</button>
+                </form>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Escribir -->
+    <form method="post" class="border-t border-gray-100 p-3 flex gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="enviar">
+      <input type="text" name="texto" required autocomplete="off"
+             placeholder="Escribí un mensaje..."
+             class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+      <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+        Enviar
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // Scroll automático al último mensaje
+  (function() {
+    var hilo = document.getElementById('hilo-mensajes');
+    if (hilo) { hilo.scrollTop = hilo.scrollHeight; }
+  })();
+</script>
+{% endblock %}
