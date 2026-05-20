@@ -144,6 +144,75 @@
       {% endif %}
     </div>
 
+    <div class="bg-white border border-gray-200 rounded-xl p-5" id="bloque-permisos-extra">
+      <h2 class="font-semibold text-gray-900 mb-1">🔑 Permisos extra</h2>
+      <p class="text-xs text-gray-500 mb-3">
+        Permisos opcionales además de los que trae el rol por defecto.
+        Se completan automáticamente según el rol elegido pero podés ajustarlos.
+      </p>
+
+      <div class="space-y-2" id="permisos-extra-checkboxes">
+        <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="checkbox" name="puede_publicar_institucional" class="mt-0.5"
+                 data-permiso="puede_publicar_institucional"
+                 {% if data.puede_publicar_institucional == 'on' %}checked{% elif not data and perfil.puede_publicar_institucional %}checked{% endif %}>
+          <span class="flex-1">
+            <span class="block text-sm font-medium text-gray-900">🏫 Publicar avisos institucionales</span>
+            <span class="block text-xs text-gray-500">Permite publicar comunicados dirigidos a toda la escuela.</span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="checkbox" name="puede_administrar_galerias_globales" class="mt-0.5"
+                 data-permiso="puede_administrar_galerias_globales"
+                 {% if data.puede_administrar_galerias_globales == 'on' %}checked{% elif not data and perfil.puede_administrar_galerias_globales %}checked{% endif %}>
+          <span class="flex-1">
+            <span class="block text-sm font-medium text-gray-900">🖼️ Administrar galerías globales</span>
+            <span class="block text-xs text-gray-500">Subir y editar fotos en galerías que no están atadas a un aula.</span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="checkbox" name="puede_ver_auditoria" class="mt-0.5"
+                 data-permiso="puede_ver_auditoria"
+                 {% if data.puede_ver_auditoria == 'on' %}checked{% elif not data and perfil.puede_ver_auditoria %}checked{% endif %}>
+          <span class="flex-1">
+            <span class="block text-sm font-medium text-gray-900">📋 Ver auditoría</span>
+            <span class="block text-xs text-gray-500">Acceder al historial de cambios del sistema.</span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="checkbox" name="puede_editar_configuracion_portal" class="mt-0.5"
+                 data-permiso="puede_editar_configuracion_portal"
+                 {% if data.puede_editar_configuracion_portal == 'on' %}checked{% elif not data and perfil.puede_editar_configuracion_portal %}checked{% endif %}>
+          <span class="flex-1">
+            <span class="block text-sm font-medium text-gray-900">⚙️ Editar configuración del portal</span>
+            <span class="block text-xs text-gray-500">Cambiar logo, portada y mensajes generales.</span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="checkbox" name="puede_administrar_materias_grados" class="mt-0.5"
+                 data-permiso="puede_administrar_materias_grados"
+                 {% if data.puede_administrar_materias_grados == 'on' %}checked{% elif not data and perfil.puede_administrar_materias_grados %}checked{% endif %}>
+          <span class="flex-1">
+            <span class="block text-sm font-medium text-gray-900">📚 Administrar materias y grados</span>
+            <span class="block text-xs text-gray-500">Crear, editar y eliminar materias y grados.</span>
+          </span>
+        </label>
+      </div>
+
+      {% if not es_edicion %}
+      <p class="text-xs text-gray-400 mt-3 italic">
+        💡 Al cambiar el rol, los permisos se autoajustan a los defaults del nuevo rol.
+        Después podés ajustarlos uno por uno.
+      </p>
+      {% endif %}
+
+      {{ defaults_permisos_por_rol|json_script:"defaults-permisos-por-rol" }}
+    </div>
+
     {% if es_edicion %}
     <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
       <h2 class="font-semibold text-amber-900 mb-1">📝 Observaciones internas</h2>
@@ -161,4 +230,33 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var rolSelect = document.querySelector('select[name="rol"]');
+  var defaultsEl = document.getElementById('defaults-permisos-por-rol');
+  if (!rolSelect || !defaultsEl) return;
+
+  var defaults = {};
+  try {
+    defaults = JSON.parse(defaultsEl.textContent);
+  } catch (e) {
+    return;
+  }
+
+  rolSelect.addEventListener('change', function() {
+    var rol = rolSelect.value;
+    var permisosDelRol = defaults[rol] || {};
+    var checkboxes = document.querySelectorAll('#permisos-extra-checkboxes input[type="checkbox"]');
+    checkboxes.forEach(function(cb) {
+      var nombre = cb.getAttribute('data-permiso');
+      if (nombre in permisosDelRol) {
+        cb.checked = !!permisosDelRol[nombre];
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}

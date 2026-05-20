@@ -21,6 +21,7 @@ from .permissions import (
     puede_eliminar_perfil,
     filtrar_personal_visible,
     aplicar_defaults_permisos_por_rol,
+    DEFAULTS_PERMISOS_POR_ROL,
 )
 
 
@@ -1133,6 +1134,7 @@ def gestion_personal_form(request, pk=None):
                 'perfil': perfil,
                 'data': request.POST,
                 'es_edicion': bool(perfil),
+                'defaults_permisos_por_rol': DEFAULTS_PERMISOS_POR_ROL,
             })
 
         # ----- Crear o actualizar el User -----
@@ -1178,6 +1180,14 @@ def gestion_personal_form(request, pk=None):
         if es_creacion or rol != rol_anterior:
             aplicar_defaults_permisos_por_rol(perfil)
 
+        # Los checkboxes del formulario sobrescriben los defaults aplicados.
+        # Si el directivo destildó algo manualmente, respetamos su elección.
+        perfil.puede_publicar_institucional = request.POST.get('puede_publicar_institucional') == 'on'
+        perfil.puede_administrar_galerias_globales = request.POST.get('puede_administrar_galerias_globales') == 'on'
+        perfil.puede_ver_auditoria = request.POST.get('puede_ver_auditoria') == 'on'
+        perfil.puede_editar_configuracion_portal = request.POST.get('puede_editar_configuracion_portal') == 'on'
+        perfil.puede_administrar_materias_grados = request.POST.get('puede_administrar_materias_grados') == 'on'
+
         if eliminar_foto:
             perfil.foto = None
         elif nueva_foto:
@@ -1201,6 +1211,7 @@ def gestion_personal_form(request, pk=None):
         'perfil': perfil,
         'data': None,
         'es_edicion': bool(perfil),
+        'defaults_permisos_por_rol': DEFAULTS_PERMISOS_POR_ROL,
     })
 
 
