@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="py-5 py-lg-6 text-bg-dark position-relative overflow-hidden">
+    {% if config and config.portada %}
+    <div class="position-absolute top-0 start-0 w-100 h-100">
+        <img src="{{ config.portada.url }}" alt="Portada" class="w-100 h-100" style="object-fit: cover; filter: brightness(0.45);">
+    </div>
+    {% endif %}
+
+    <div class="container position-relative">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">
+                    {% if config and config.titulo_landing %}
+                        {{ config.titulo_landing }}
+                    {% else %}
+                        Bienvenidos al Portal Escolar
+                    {% endif %}
+                </h1>
+                <p class="lead mb-4">
+                    {% if config and config.texto_bienvenida %}
+                        {{ config.texto_bienvenida }}
+                    {% else %}
+                        Aqui encontraras todas las comunicaciones.
+                    {% endif %}
+                </p>
+                <a href="#" class="btn btn-primary btn-lg px-4">Ingresar</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

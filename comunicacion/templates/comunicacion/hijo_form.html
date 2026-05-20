@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{% if es_edicion %}Editar hijo/a{% else %}Agregar hijo/a{% endif %} - Portal Escolar{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-6">
+  <div class="mb-6">
+    <a href="{% url 'comunicacion:mi_cuenta' %}" class="text-sm text-slate-600 hover:text-slate-900 underline underline-offset-2">
+      ← Volver a mi cuenta
+    </a>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-6">
+    <h1 class="text-xl font-semibold text-slate-900 mb-1">
+      {% if es_edicion %}Editar hijo/a{% else %}Agregar hijo/a{% endif %}
+    </h1>
+    <p class="text-sm text-slate-500 mb-5">Cargá el nombre y el aula que cursa.</p>
+
+    {% if messages %}
+      {% for m in messages %}
+        {% if m.tags == 'error' %}
+          <div class="mb-3 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-800">{{ m }}</div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Nombre y apellido</label>
+        <input type="text" name="nombre" required maxlength="100"
+               value="{% if hijo %}{{ hijo.nombre }}{% endif %}"
+               class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Grado / Aula</label>
+        <select name="grado" required
+                class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
+          <option value="">— Seleccionar —</option>
+          {% for g in grados %}
+            <option value="{{ g.pk }}" {% if hijo and hijo.grado_id == g.pk %}selected{% endif %}>
+              {{ g.nombre }} — {{ g.get_turno_display }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <a href="{% url 'comunicacion:mi_cuenta' %}"
+           class="text-sm border border-slate-300 hover:bg-slate-50 text-slate-700 py-2 px-4 rounded-md">
+          Cancelar
+        </a>
+        <button type="submit"
+                class="text-sm bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md">
+          {% if es_edicion %}Guardar cambios{% else %}Agregar{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

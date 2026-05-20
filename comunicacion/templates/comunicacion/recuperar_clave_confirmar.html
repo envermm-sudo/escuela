@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva contraseña - {{ config.nombre_institucion|default:"Portal Escolar" }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center px-4 py-8">
+  <div class="w-full max-w-md">
+
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-6 sm:p-8">
+
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-semibold text-slate-900">Nueva contraseña</h1>
+        <p class="text-sm text-slate-500 mt-2">
+          Hola <strong class="text-slate-700">{{ user_obj.first_name|default:user_obj.username }}</strong>,
+          ingresá tu contraseña nueva.
+        </p>
+      </div>
+
+      {% if error %}
+        <div class="rounded-md bg-red-50 border border-red-200 p-3 mb-4">
+          <p class="text-sm text-red-800">{{ error }}</p>
+        </div>
+      {% endif %}
+
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            Contraseña nueva
+          </label>
+          <input type="password" name="password_nueva" required minlength="6" autofocus
+                 class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400">
+          <p class="text-xs text-slate-500 mt-1">Mínimo 6 caracteres.</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            Repetí la contraseña
+          </label>
+          <input type="password" name="password_repetir" required minlength="6"
+                 class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 px-4 rounded-md text-sm transition">
+          Guardar contraseña
+        </button>
+      </form>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

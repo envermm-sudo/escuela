@@ -1,0 +1,391 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Matriz de asignaciones{% endblock %}
+{% block extra_css %}
+<style>
+  .matriz-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .matriz-encabezado {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(to bottom, #fafafa, #ffffff);
+  }
+
+  .matriz-encabezado h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 4px 0;
+  }
+
+  .matriz-encabezado .subtitulo {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .matriz-encabezado .docente-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .matriz-encabezado .avatar-mini {
+    height: 48px;
+    width: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+    flex-shrink: 0;
+  }
+
+  .matriz-toolbar {
+    padding: 12px 24px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .matriz-toolbar .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 4px;
+  }
+
+  .matriz-toolbar button {
+    font-size: 12px;
+    padding: 5px 10px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #374151;
+    font-weight: 500;
+    transition: all 0.1s;
+  }
+
+  .matriz-toolbar button:hover {
+    background: #eef2ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
+  }
+
+  .matriz-toolbar .separador {
+    width: 1px;
+    height: 18px;
+    background: #d1d5db;
+    margin: 0 6px;
+  }
+
+  /* Tabla principal */
+  .matriz-scroll {
+    overflow-x: auto;
+  }
+
+  .matriz-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .matriz-tabla thead th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    padding: 12px 10px;
+    text-align: center;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+
+  .matriz-tabla thead th.col-grado {
+    text-align: left;
+    padding-left: 24px;
+    min-width: 200px;
+    background: #f3f4f6;
+  }
+
+  .matriz-tabla tbody td {
+    padding: 0;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: center;
+  }
+
+  .matriz-tabla tbody td.col-grado {
+    text-align: left;
+    padding: 0;
+    background: #fafafa;
+    border-right: 2px solid #e5e7eb;
+  }
+
+  .matriz-tabla tbody td.col-grado .grado-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 24px;
+    color: #1f2937;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+    transition: background 0.1s;
+  }
+
+  .matriz-tabla tbody td.col-grado .grado-link:hover {
+    background: #f3f4f6;
+    color: #4338ca;
+  }
+
+  .matriz-tabla tbody td.col-grado .turno-icono {
+    font-size: 16px;
+  }
+
+  .matriz-tabla tbody td.celda {
+    padding: 0;
+  }
+
+  .matriz-tabla tbody td.celda label {
+    display: block;
+    padding: 16px 10px;
+    cursor: pointer;
+    margin: 0;
+    height: 100%;
+  }
+
+  .matriz-tabla tbody td.celda input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    margin: 0;
+    accent-color: #10b981;
+    vertical-align: middle;
+  }
+
+  .matriz-tabla tbody td.celda:has(input:checked) {
+    background: #ecfdf5;
+  }
+
+  .matriz-tabla tbody td.celda:hover {
+    background: #f3f4f6;
+  }
+
+  .matriz-tabla tbody td.celda:has(input:checked):hover {
+    background: #d1fae5;
+  }
+
+  .matriz-tabla tbody tr:hover td.col-grado {
+    background: #f3f4f6;
+  }
+
+  /* Pie con botón guardar */
+  .matriz-pie {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-guardar {
+    padding: 10px 24px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .btn-guardar:hover {
+    background: #4338ca;
+  }
+
+  .btn-volver {
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .btn-volver:hover {
+    color: #374151;
+  }
+
+  /* Estado vacío */
+  .matriz-vacia {
+    padding: 60px 24px;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  .matriz-vacia a {
+    color: #4f46e5;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .matriz-vacia a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 640px) {
+    .matriz-encabezado, .matriz-toolbar, .matriz-pie {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    .matriz-tabla thead th.col-grado, .matriz-tabla tbody td.col-grado .grado-link {
+      padding-left: 16px;
+      min-width: 150px;
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+<a href="{% url 'staff:gestion_personal_editar' perfil.pk %}" class="text-sm text-gray-500 hover:text-gray-700 inline-block mb-3">← Volver al perfil del docente</a>
+  <div class="matriz-card">
+<!-- Encabezado -->
+<div class="matriz-encabezado">
+  <div class="docente-info">
+    {% if perfil.foto %}
+    <img src="{{ perfil.foto.url }}" alt="" class="avatar-mini">
+    {% else %}
+    <div class="avatar-mini" style="background:#6366f1;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;">
+      {{ perfil.user.first_name|slice:":1"|upper }}{{ perfil.user.last_name|slice:":1"|upper }}
+    </div>
+    {% endif %}
+    <div>
+      <h1>🎓 Matriz de asignaciones</h1>
+      <div class="subtitulo">
+        {{ perfil.user.first_name }} {{ perfil.user.last_name }} · {{ perfil.get_rol_display }}
+        · <strong>{{ cant_actuales }}</strong> asignación{{ cant_actuales|pluralize:"es" }} cargada{{ cant_actuales|pluralize:"s" }}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not grados or not materias %}
+<div class="matriz-vacia">
+  {% if not grados %}<p>⚠️ No hay grados activos.</p><p><a href="{% url 'staff:gestion_grado_nuevo' %}">+ Crear primer grado</a></p>{% endif %}
+  {% if not materias %}<p>⚠️ No hay materias cargadas.</p><p><a href="{% url 'staff:gestion_materia_nueva' %}">+ Crear primera materia</a></p>{% endif %}
+</div>
+{% else %}
+
+<form method="post" id="form-matriz" action="">
+  {% csrf_token %}
+
+  <!-- Toolbar superior con atajos globales y por columna -->
+  <div class="matriz-toolbar">
+    <span class="label">Acciones globales:</span>
+    <button type="button" id="btn-marcar-todo">✓ Marcar todo</button>
+    <button type="button" id="btn-limpiar-todo">✗ Limpiar todo</button>
+
+    <span class="separador"></span>
+
+    <span class="label">Tildar columna:</span>
+    {% for materia in materias %}
+    <button type="button" data-col-materia="{{ materia.id }}">{{ materia.nombre }}</button>
+    {% endfor %}
+  </div>
+
+  <!-- Tabla principal -->
+  <div class="matriz-scroll">
+    <table class="matriz-tabla">
+      <thead>
+        <tr>
+          <th class="col-grado">Grado</th>
+          {% for materia in materias %}
+          <th>
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ materia.get_color }};margin-right:6px;vertical-align:middle;"></span>{{ materia.nombre }}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          <td class="col-grado">
+            <a class="grado-link" data-fila-marcar="{{ fila.grado.id }}" title="Click para tildar/destildar todas las materias de este grado">
+              <span class="turno-icono">
+                {% if fila.grado.turno == 'manana' %}☀️
+                {% elif fila.grado.turno == 'tarde' %}🌅
+                {% elif fila.grado.turno == 'vespertino' %}🌙
+                {% endif %}
+              </span>
+              <span>{{ fila.grado.nombre }} - {{ fila.grado.get_turno_display }}</span>
+            </a>
+          </td>
+          {% for celda in fila.celdas %}
+          <td class="celda">
+            <label>
+              <input type="checkbox" name="{{ celda.clave }}" value="1"
+                     data-grado="{{ fila.grado.id }}"
+                     data-materia="{{ celda.materia_id }}"
+                     {% if celda.asignada %}checked{% endif %}>
+            </label>
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pie con botón guardar -->
+  <div class="matriz-pie">
+    <a href="{% url 'staff:gestion_personal_editar' perfil.pk %}" class="btn-volver">← Volver sin guardar</a>
+    <button type="submit" class="btn-guardar">💾 Guardar matriz</button>
+  </div>
+</form>
+{% endif %}
+  </div>
+</div>
+<script>
+(function() {
+  const cbs = () => document.querySelectorAll('#form-matriz input[type="checkbox"]');
+
+  document.getElementById('btn-marcar-todo')?.addEventListener('click', () => {
+    cbs().forEach(c => c.checked = true);
+  });
+
+  document.getElementById('btn-limpiar-todo')?.addEventListener('click', () => {
+    cbs().forEach(c => c.checked = false);
+  });
+
+  // Tildar columna entera
+  document.querySelectorAll('[data-col-materia]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-col-materia');
+      const targets = document.querySelectorAll(`#form-matriz input[data-materia="${id}"]`);
+      const algunoSinMarcar = Array.from(targets).some(c => !c.checked);
+      targets.forEach(c => c.checked = algunoSinMarcar);
+    });
+  });
+
+  // Click en el nombre del grado tilda toda la fila
+  document.querySelectorAll('[data-fila-marcar]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = link.getAttribute('data-fila-marcar');
+      const targets = document.querySelectorAll(`#form-matriz input[data-grado="${id}"]`);
+      const algunoSinMarcar = Array.from(targets).some(c => !c.checked);
+      targets.forEach(c => c.checked = algunoSinMarcar);
+    });
+  });
+})();
+</script>
+{% endblock %}

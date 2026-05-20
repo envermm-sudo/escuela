@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Mis grados{% endblock %}
+
+{% block content %}
+<section class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white shadow-md rounded-2xl p-6 sm:p-8 border border-gray-100">
+        <h1 class="text-2xl font-bold text-gray-900">Mis grados</h1>
+        <p class="text-sm text-gray-600 mt-2 mb-6">Acá podés cambiar los grados de los que querés recibir notificaciones.</p>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Grados que seguís</label>
+                {% with selected=form.grados.value %}
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {% for grado in form.fields.grados.queryset %}
+                            <label for="grado_{{ grado.pk }}" class="group cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="grados"
+                                    value="{{ grado.pk }}"
+                                    id="grado_{{ grado.pk }}"
+                                    class="peer sr-only"
+                                    {% if selected %}
+                                        {% if grado.pk|stringformat:'s' in selected or grado.pk in selected %}checked{% endif %}
+                                    {% endif %}
+                                >
+                                <span class="block rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-800">
+                                    {{ grado }}
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% endwith %}
+                {% if form.grados.errors %}<div class="text-red-600 text-sm mt-2">{{ form.grados.errors }}</div>{% endif %}
+            </div>
+
+            <button type="submit" class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
+                Guardar cambios
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}

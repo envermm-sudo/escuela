@@ -1,0 +1,182 @@
+/* ================================================================
+Custom CSS para el admin Jazzmin del Portal Escuela
+
+- Compacta forms en desktop
+- Mejora UX en mobile
+================================================================ */
+
+/* Inputs y selects no se estiran horizontalmente sin control */
+.form-row input[type="text"],
+.form-row input[type="email"],
+.form-row input[type="url"],
+.form-row input[type="number"],
+.form-row input[type="date"],
+.form-row input[type="datetime-local"],
+.form-row input[type="time"],
+.form-row select {
+    max-width: 480px;
+    width: 100%;
+}
+
+.form-row textarea {
+    max-width: 720px;
+    width: 100%;
+    min-height: 100px;
+}
+
+/* Select multiple (filter_horizontal usa esto) */
+.selector {
+    max-width: 720px;
+}
+
+.selector select {
+    width: 100% !important;
+    min-height: 180px;
+}
+
+/* Inlines mas compactos */
+.inline-related .form-row {
+    padding: 6px 10px;
+}
+
+.inline-related h3 {
+    padding: 6px 10px;
+    font-size: 0.95rem;
+}
+
+/* Fieldsets con titulo destacado */
+fieldset.module h2 {
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+fieldset.module {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+/* Submit row sticky al fondo en desktop */
+.submit-row {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+    z-index: 50;
+}
+
+/* Lista de objetos: filas mas densas */
+#changelist table tbody tr td {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+}
+
+#changelist table thead th {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+}
+
+/* ================================================================
+MOBILE (< 768px)
+================================================================ */
+@media (max-width: 768px) {
+    /* Compacta el header del admin */
+    .main-header.navbar {
+        padding: 0.25rem 0.75rem;
+    }
+
+    /* Sidebar oculto por default ya lo maneja Jazzmin, reforzamos compactacion */
+    .content-wrapper {
+        padding: 0.5rem !important;
+    }
+
+    /* Forms a ancho completo */
+    .form-row input[type="text"],
+    .form-row input[type="email"],
+    .form-row input[type="url"],
+    .form-row input[type="number"],
+    .form-row input[type="date"],
+    .form-row input[type="datetime-local"],
+    .form-row input[type="time"],
+    .form-row select,
+    .form-row textarea,
+    .selector {
+        max-width: 100%;
+    }
+
+    /* Filter horizontal apilado en mobile */
+    .selector .selector-available,
+    .selector .selector-chosen {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .selector-chooser {
+        width: 100%;
+        text-align: center;
+        margin: 6px 0;
+    }
+
+    /* Inlines en cards independientes */
+    .inline-group {
+        overflow-x: auto;
+    }
+
+    .inline-related {
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+    }
+
+    /* Tabs horizontales del changeform -> scroll horizontal en mobile */
+    .nav-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tabs .nav-item {
+        flex-shrink: 0;
+    }
+
+    /* Tabla de listados: scroll horizontal */
+    #changelist .results {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #changelist table {
+        font-size: 0.85rem;
+    }
+
+    /* Filtros de la derecha -> arriba en mobile */
+    #changelist-filter {
+        position: static !important;
+        width: 100% !important;
+        margin-bottom: 12px;
+    }
+
+    /* Botones de accion mas grandes para tap */
+    .submit-row input,
+    .submit-row a,
+    .button {
+        padding: 10px 14px !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+/* ================================================================
+Branding Tecnosoft (footer)
+================================================================ */
+.main-footer {
+    font-size: 0.75rem;
+    text-align: center;
+    color: #6b7280;
+}

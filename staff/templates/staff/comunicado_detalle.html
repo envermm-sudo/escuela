@@ -1,0 +1,74 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}{{ comunicado.titulo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+  <a href="{% url 'staff:comunicados_lista' %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver a comunicados</a>
+
+  <!-- Card principal -->
+  <div class="bg-white border border-gray-200 rounded-xl mt-2 overflow-hidden">
+
+    <div class="p-5 sm:p-6 border-b border-gray-100">
+      <div class="flex items-center gap-2 flex-wrap mb-3">
+        {% if comunicado.fijado %}<span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded font-medium">📌 Fijado</span>{% endif %}
+        {% if comunicado.urgente %}<span class="text-xs px-2 py-0.5 bg-red-100 text-red-800 rounded font-medium">🚨 Urgente</span>{% endif %}
+        <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">{{ comunicado.get_tipo_display }}</span>
+        {% if not comunicado.activo %}<span class="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded">Inactivo</span>{% endif %}
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ comunicado.titulo }}</h1>
+
+      <div class="text-sm text-gray-500 mt-2 flex items-center gap-3 flex-wrap">
+        <span>📅 {{ comunicado.fecha_publicacion|date:"d M Y · H:i" }}</span>
+        {% if comunicado.fecha_vencimiento %}<span class="text-orange-700">⏰ Vence: {{ comunicado.fecha_vencimiento|date:"d M Y" }}</span>{% endif %}
+        <span>👁 {{ comunicado.vistas }} vista{{ comunicado.vistas|pluralize:"s" }}</span>
+      </div>
+    </div>
+
+    <div class="p-5 sm:p-6">
+      <div class="prose prose-sm max-w-none text-gray-800 whitespace-pre-line">{{ comunicado.contenido }}</div>
+
+      {% if comunicado.archivo_adjunto %}
+      <a href="{{ comunicado.archivo_adjunto.url }}" target="_blank"
+         class="inline-flex items-center gap-2 mt-4 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700">
+        📎 Descargar archivo adjunto
+      </a>
+      {% endif %}
+
+      {% if comunicado.imagenes.all %}
+      <div class="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {% for img in comunicado.imagenes.all %}
+        <a href="{{ img.imagen.url }}" target="_blank">
+          <img src="{{ img.imagen.url }}" alt="" class="w-full h-32 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition">
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Metadatos -->
+    <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600">
+      <div class="flex items-center gap-2">
+        <span class="font-medium text-gray-700">Autor:</span>
+        {% include "comunicacion/_avatar_docente.html" with docente=comunicado.autor materia=comunicado.materia size="xs" %}
+        <span>{{ comunicado.autor.perfil_docente.get_nombre_completo|default:comunicado.autor.username }}</span>
+      </div>
+      {% if comunicado.materia %}<div><span class="font-medium text-gray-700">Materia:</span> {{ comunicado.materia }}</div>{% endif %}
+      <div><span class="font-medium text-gray-700">Grados:</span> {% for g in comunicado.grados.all %}{{ g }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      {% if comunicado.modificado_por %}<div><span class="font-medium text-gray-700">Ultima edicion:</span> {{ comunicado.modificado_por.first_name|default:comunicado.modificado_por.username }} · {{ comunicado.fecha_modificacion|date:"d M Y · H:i" }}</div>{% endif %}
+    </div>
+
+    <!-- Acciones -->
+    {% if puede_editar %}
+    <div class="px-5 sm:px-6 py-3 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
+      <a href="{% url 'staff:comunicado_editar' comunicado.pk %}"
+         class="flex-1 text-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg">✏️ Editar</a>
+      <a href="{% url 'staff:comunicado_eliminar' comunicado.pk %}"
+         class="flex-1 text-center px-4 py-2 bg-white border border-red-300 text-red-700 hover:bg-red-50 font-medium rounded-lg">🗑️ Eliminar</a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

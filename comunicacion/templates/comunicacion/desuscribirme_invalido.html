@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Link inválido - Portal Escolar{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-10">
+  <div class="bg-white border border-slate-200 rounded-lg p-6 text-center">
+    <h1 class="text-xl font-semibold text-slate-900 mb-2">Link inválido</h1>
+    <p class="text-sm text-slate-600 mb-5">
+      El enlace de desuscripción no es válido. Si querés dejar de recibir emails, entrá al portal y
+      configuralo desde tu cuenta.
+    </p>
+    <a href="{% url 'comunicacion:landing' %}"
+       class="inline-block text-sm bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-5 rounded-md">
+      Volver al inicio
+    </a>
+  </div>
+</div>
+{% endblock %}

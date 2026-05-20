@@ -1,0 +1,186 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}{{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+  <div class="mb-5">
+    <a href="{% url 'staff:galerias_lista' %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver a galerías</a>
+    <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ titulo_pagina }}</h1>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-5">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="px-4 py-3 rounded-lg bg-red-50 text-red-800 border border-red-200 text-sm">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h2 class="font-semibold text-gray-900 mb-4">📝 Información del evento</h2>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+        <input type="text" name="titulo" value="{{ form.titulo.value|default:'' }}" required maxlength="200"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+        {{ form.titulo.errors }}
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <textarea name="descripcion" rows="4"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">{{ form.descripcion.value|default:'' }}</textarea>
+        {{ form.descripcion.errors }}
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fecha del evento *</label>
+          <input type="date" name="fecha_evento" required value="{{ form.fecha_evento.value|date:'Y-m-d' }}"
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          {{ form.fecha_evento.errors }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <label class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:bg-green-50 has-[:checked]:border-green-300 transition">
+            <input type="checkbox" name="activa" {% if form.activa.value or not es_edicion %}checked{% endif %} class="rounded">
+            <span class="text-sm">✅ Galería visible</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Grados destinatarios *</label>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {% for g in form.fields.grados.queryset %}
+          <label class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:bg-purple-50 has-[:checked]:border-purple-300 transition">
+            <input type="checkbox" name="grados" value="{{ g.id }}"
+                   {% if g in form.grados.value or g.id|stringformat:'s' in form.grados.value|default_if_none:'' %}checked{% endif %}
+                   class="rounded text-purple-600">
+            <span class="text-sm">{{ g }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        {{ form.grados.errors }}
+      </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h2 class="font-semibold text-gray-900 mb-4">📷 Fotos</h2>
+
+      {% if galeria and galeria.fotos.all %}
+      <div class="mb-4">
+        <p class="text-sm text-gray-600 mb-2">Fotos actuales (marcá para eliminar):</p>
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+          {% for f in galeria.fotos.all %}
+          <label class="relative block cursor-pointer group">
+            <input type="checkbox" name="eliminar_foto" value="{{ f.id }}" class="peer sr-only">
+            <img src="{{ f.imagen.url }}" alt="" class="w-full h-24 object-cover rounded-lg border-2 border-transparent peer-checked:border-red-500 peer-checked:opacity-50 transition">
+            <span class="absolute top-1 right-1 hidden peer-checked:flex h-6 w-6 bg-red-500 text-white rounded-full items-center justify-center text-xs font-bold">✕</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <label for="input_fotos" id="dropzone-galeria"
+             class="block border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition">
+        <div class="text-4xl mb-2">📤</div>
+        <p class="text-base text-gray-700 font-semibold">Arrastrá las fotos del evento acá</p>
+        <p class="text-sm text-gray-500 mt-1">o tocá para elegir desde tu computadora</p>
+        <p class="text-xs text-gray-400 mt-2">Podés subir varias a la vez. Se convertirán automáticamente a .webp para cargar más rápido.</p>
+      </label>
+      <input type="file" name="fotos_nuevas" id="input_fotos" multiple accept="image/*" style="display:none;">
+
+      <div id="contador_fotos" class="text-sm text-emerald-700 font-semibold mt-3 hidden"></div>
+      <div id="preview_fotos" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 mt-3"></div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-2 sm:justify-end sticky bottom-0 bg-gray-50 -mx-4 md:-mx-6 px-4 md:px-6 py-3 border-t border-gray-200">
+      <a href="{% url 'staff:galerias_lista' %}" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center">Cancelar</a>
+      <button type="submit" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg">
+        {% if es_edicion %}Guardar cambios{% else %}Crear galería{% endif %}
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var dropzone = document.getElementById('dropzone-galeria');
+  var input = document.getElementById('input_fotos');
+  var preview = document.getElementById('preview_fotos');
+  var contador = document.getElementById('contador_fotos');
+  if (!dropzone || !input) return;
+
+  ['dragenter','dragover'].forEach(function(ev) {
+    dropzone.addEventListener(ev, function(e) {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.add('border-indigo-500','bg-indigo-50');
+    });
+  });
+  ['dragleave','drop'].forEach(function(ev) {
+    dropzone.addEventListener(ev, function(e) {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.remove('border-indigo-500','bg-indigo-50');
+    });
+  });
+
+  dropzone.addEventListener('drop', function(e) {
+    var files = e.dataTransfer.files;
+    if (!files || !files.length) return;
+    try {
+      var dt = new DataTransfer();
+      for (var i = 0; i < files.length; i++) {
+        if (files[i].type && files[i].type.indexOf('image/') === 0) {
+          dt.items.add(files[i]);
+        }
+      }
+      input.files = dt.files;
+      renderPreview();
+    } catch (err) {
+      alert('Tu navegador no soporta arrastrar archivos. Tocá la zona para elegir.');
+    }
+  });
+
+  input.addEventListener('change', renderPreview);
+
+  function renderPreview() {
+    preview.innerHTML = '';
+    var files = input.files;
+    if (!files || !files.length) {
+      contador.classList.add('hidden');
+      return;
+    }
+    contador.classList.remove('hidden');
+    contador.textContent = '✓ ' + files.length + ' foto' + (files.length > 1 ? 's' : '') + ' lista' + (files.length > 1 ? 's' : '') + ' para subir.';
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      if (!file.type || file.type.indexOf('image/') !== 0) continue;
+      var reader = new FileReader();
+      (function(f) {
+        reader.onload = function(e) {
+          var div = document.createElement('div');
+          div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50';
+          var img = document.createElement('img');
+          img.src = e.target.result;
+          img.alt = f.name;
+          img.className = 'w-full h-full object-cover';
+          var label = document.createElement('div');
+          label.className = 'absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] px-1.5 py-0.5 truncate';
+          label.textContent = f.name;
+          div.appendChild(img);
+          div.appendChild(label);
+          preview.appendChild(div);
+        };
+      })(file);
+      reader.readAsDataURL(file);
+    }
+  }
+})();
+</script>
+{% endblock %}

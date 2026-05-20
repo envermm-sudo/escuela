@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Galería · acceso restringido{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-12">
+  <div class="bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
+    <div class="text-6xl mb-4">🔒</div>
+
+    {% if motivo == 'no_logueado' %}
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">Galería privada</h1>
+    <p class="text-gray-600 mb-6">
+      Las fotos de los eventos escolares están disponibles solo para padres y madres registrados/as en el portal.
+    </p>
+    <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6 text-left">
+      <h2 class="font-semibold text-indigo-900 mb-2">¿Por qué hay que registrarse?</h2>
+      <ul class="text-sm text-indigo-800 space-y-1 list-disc pl-5">
+        <li>Para proteger la privacidad de los chicos y chicas.</li>
+        <li>Solo accederán las familias del aula correspondiente.</li>
+        <li>Es gratis y solo te pide nombre y email.</li>
+      </ul>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{% url 'comunicacion:registro_padre' %}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg">Registrarme</a>
+      <a href="{% url 'comunicacion:login_padre' %}" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg">Ya tengo cuenta · Iniciar sesión</a>
+    </div>
+
+    {% elif motivo == 'sin_hijo_en_grado' %}
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">No tenés acceso a esta galería</h1>
+    <p class="text-gray-600 mb-6">
+      Solo las familias del grado correspondiente pueden ver estas fotos.
+      Si tenés un hijo/a en este grado y no aparece en tu cuenta, agregalo desde "Mis grados".
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{% url 'comunicacion:mis_grados' %}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg">Editar mis grados</a>
+      <a href="{% url 'comunicacion:landing' %}" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg">Volver al inicio</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

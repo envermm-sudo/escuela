@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ comunicado.titulo }} — {{ config.nombre_institucion|default:"Portal Escolar" }}{% endblock %}
+
+{% block extra_head %}
+<meta property="og:title" content="{{ comunicado.titulo }}">
+<meta property="og:description" content="{{ comunicado.contenido|truncatechars:180 }}">
+<meta property="og:type" content="article">
+{% with primera=comunicado.imagenes.first %}
+{% if primera %}
+<meta property="og:image" content="{{ primera.imagen.url }}">
+{% endif %}
+{% endwith %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6">
+
+  <div class="mb-4">
+    {% if grado_muro %}
+    <a href="{% url 'comunicacion:muro_grado' grado_muro.slug %}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">← Volver al muro</a>
+    {% else %}
+    <a href="{% url 'comunicacion:landing' %}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">← Volver al inicio</a>
+    {% endif %}
+  </div>
+
+  <article class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+    <header class="px-5 sm:px-6 pt-6 pb-4 border-b border-gray-100">
+      {% if comunicado.es_institucional %}
+      <div class="materia-banner materia-banner-lg" style="background-color: #7c3aed !important;">
+        <span class="materia-icono">🏫</span>
+        <span class="materia-nombre">INSTITUCIONAL</span>
+      </div>
+      {% elif comunicado.materia %}
+      <div class="materia-banner materia-banner-lg" style="background-color: {{ comunicado.materia.get_color }} !important;">
+        <span class="materia-icono">📐</span>
+        <span class="materia-nombre">{{ comunicado.materia.nombre }}</span>
+      </div>
+      {% else %}
+      <div class="materia-banner materia-banner-lg" style="background-color: #475569 !important;">
+        <span class="materia-icono">📢</span>
+        <span class="materia-nombre">General del aula</span>
+      </div>
+      {% endif %}
+
+      <div class="flex items-center gap-2 flex-wrap mb-3">
+        {% if comunicado.fijado %}<span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-medium">📌 Fijado</span>{% endif %}
+        {% if comunicado.urgente %}<span class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded font-medium">🚨 URGENTE</span>{% endif %}
+        <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">{{ comunicado.get_tipo_display }}</span>
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ comunicado.titulo }}</h1>
+      <div class="text-sm text-gray-500 mt-2 flex items-center gap-3 flex-wrap">
+        <span>📅 {{ comunicado.fecha_publicacion|date:"d M Y · H:i" }}</span>
+      </div>
+      {% if comunicado.autor %}
+      <div class="mt-4 flex items-center gap-3">
+        {% include "comunicacion/_avatar_docente.html" with docente=comunicado.autor materia=comunicado.materia size="lg" %}
+        <div>
+          <div class="font-semibold text-gray-900">
+            {% with first=comunicado.autor.first_name last=comunicado.autor.last_name %}
+            {% if first and last %}{{ first }} {{ last }}
+            {% elif first %}{{ first }}
+            {% else %}Docente{% endif %}
+            {% endwith %}
+          </div>
+          {% if comunicado.autor.perfil_docente %}
+          <div class="text-xs text-gray-500">{{ comunicado.autor.perfil_docente.get_rol_display|default:"Docente" }}{% if comunicado.materia %} · {{ comunicado.materia.nombre }}{% endif %}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </header>
+
+    <div class="px-5 sm:px-6 py-5">
+      <div class="prose prose-sm max-w-none text-gray-800 whitespace-pre-line leading-relaxed">{{ comunicado.contenido }}</div>
+    </div>
+
+    {% if comunicado.imagenes.all %}
+    <section class="px-5 sm:px-6 pb-5">
+      <h2 class="text-sm font-semibold text-gray-700 mb-2">Imágenes</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {% for img in comunicado.imagenes.all %}
+        <a href="{{ img.imagen.url }}" target="_blank" rel="noopener">
+          <img src="{{ img.imagen.url }}" alt="Imagen del comunicado" class="w-full h-32 sm:h-40 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition">
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if comunicado.archivo_adjunto %}
+    <footer class="px-5 sm:px-6 pb-6 pt-2">
+      <a href="{{ comunicado.archivo_adjunto.url }}" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+         📎 Descargar archivo adjunto
+      </a>
+    </footer>
+    {% endif %}
+  </article>
+
+</div>
+{% endblock %}

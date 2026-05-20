@@ -1,0 +1,105 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Configuración{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-1">⚙️ Configuración del portal</h1>
+  <p class="text-sm text-gray-500 mb-5">Datos de la escuela, logo y portada que se muestran en el sitio público.</p>
+  <form method="post" enctype="multipart/form-data" class="space-y-5">
+    {% csrf_token %}
+<div class="bg-white border border-gray-200 rounded-xl p-5">
+  <h2 class="font-semibold text-gray-900 mb-4">🏫 Datos de la escuela</h2>
+  <div class="space-y-3">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la escuela</label>
+      <input type="text" name="nombre_escuela" value="{{ config.nombre_escuela }}" maxlength="200"
+             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Email de contacto</label>
+      <input type="email" name="email_contacto" value="{{ config.email_contacto }}" maxlength="200"
+             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+    </div>
+  </div>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-xl p-5">
+  <h2 class="font-semibold text-gray-900 mb-4">🎨 Apariencia del landing público</h2>
+  <p class="text-xs text-gray-500 mb-4">Cómo se ve la página principal que ven los padres antes de entrar a un aula.</p>
+
+  <div class="space-y-3">
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje principal</label>
+      <input type="text" name="mensaje_bienvenida" value="{{ config.mensaje_bienvenida }}" maxlength="200"
+             placeholder="Ej: Bienvenidos al Portal"
+             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje secundario</label>
+      <input type="text" name="mensaje_secundario" value="{{ config.mensaje_secundario }}" maxlength="300"
+             placeholder="Ej: Encontrá el aula de tu hijo/a"
+             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+    </div>
+
+    <div class="border-t border-gray-100 pt-3 mt-3">
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="checkbox" name="mostrar_portada_grande" {% if config.mostrar_portada_grande %}checked{% endif %} class="mt-1">
+        <div>
+          <div class="text-sm font-medium text-gray-700">Mostrar banner grande con la portada</div>
+          <div class="text-xs text-gray-500">Si está activo, en el landing se ve la imagen de portada como banner grande arriba. Si no, solo aparece un título sutil. (Recomendado: desactivado para un look más limpio.)</div>
+        </div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-xl p-5">
+  <h2 class="font-semibold text-gray-900 mb-4">🖼️ Logo</h2>
+  <div class="flex flex-col sm:flex-row gap-4 items-start">
+    {% if config.logo %}
+    <img src="{{ config.logo.url }}" alt="Logo" class="h-32 w-32 rounded-lg object-contain border border-gray-200 bg-white p-2">
+    {% else %}
+    <div class="h-32 w-32 rounded-lg border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-400">Sin logo</div>
+    {% endif %}
+    <div class="flex-1 space-y-2">
+      <label class="block">
+        <input type="file" name="logo" accept="image/*" class="text-sm">
+      </label>
+      <p class="text-xs text-gray-500">Se redimensiona automáticamente a 400x400 y se convierte a webp.</p>
+      {% if config.logo %}
+      <label class="flex items-center gap-2 text-sm text-red-600">
+        <input type="checkbox" name="logo_clear"> Eliminar el logo actual
+      </label>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-xl p-5">
+  <h2 class="font-semibold text-gray-900 mb-4">🌅 Portada (banner del muro)</h2>
+  <div class="space-y-3">
+    {% if config.portada %}
+    <img src="{{ config.portada.url }}" alt="Portada" class="w-full h-40 rounded-lg object-cover border border-gray-200">
+    {% else %}
+    <div class="w-full h-40 rounded-lg border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-sm text-gray-400">Sin portada</div>
+    {% endif %}
+    <input type="file" name="portada" accept="image/*" class="text-sm">
+    <p class="text-xs text-gray-500">Se redimensiona automáticamente a 1920x800 y se convierte a webp.</p>
+    {% if config.portada %}
+    <label class="flex items-center gap-2 text-sm text-red-600">
+      <input type="checkbox" name="portada_clear"> Eliminar la portada actual
+    </label>
+    {% endif %}
+  </div>
+</div>
+
+<div class="flex justify-end">
+  <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg">
+    💾 Guardar cambios
+  </button>
+</div>
+  </form>
+</div>
+{% endblock %}

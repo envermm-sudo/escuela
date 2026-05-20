@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Listo - Portal Escolar{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-10">
+  <div class="bg-white border border-slate-200 rounded-lg p-6 text-center">
+    <div class="mx-auto w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+      <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h1 class="text-xl font-semibold text-slate-900 mb-2">Listo, {{ perfil.user.first_name|default:perfil.user.username }}</h1>
+    <p class="text-sm text-slate-600 mb-5">
+      Desactivamos los emails automáticos. Para volver a recibirlos, entrá al portal y configuralo en tu cuenta.
+    </p>
+    <a href="{% url 'comunicacion:landing' %}"
+       class="inline-block text-sm bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-5 rounded-md">
+      Volver al portal
+    </a>
+  </div>
+</div>
+{% endblock %}

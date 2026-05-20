@@ -1,0 +1,21 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Eliminar galería{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-10">
+  <div class="bg-white border border-red-200 rounded-xl overflow-hidden">
+    <div class="p-6 text-center">
+      <div class="text-5xl mb-3">⚠️</div>
+      <h1 class="text-xl font-bold text-gray-900 mb-2">¿Eliminar esta galería?</h1>
+      <p class="text-sm text-gray-600 mb-1">Se eliminarán también todas sus fotos. Esta acción no se puede deshacer.</p>
+      <p class="font-medium text-gray-900 mt-3">"{{ galeria.titulo }}"</p>
+      <p class="text-xs text-gray-500 mt-1">{{ galeria.fotos.count }} foto{{ galeria.fotos.count|pluralize:"s" }} · {{ galeria.fecha_evento|date:"d M Y" }}</p>
+    </div>
+    <form method="post" class="p-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
+      {% csrf_token %}
+      <a href="{% url 'staff:galeria_detalle' galeria.pk %}" class="flex-1 text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-lg">Cancelar</a>
+      <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg">Sí, eliminar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

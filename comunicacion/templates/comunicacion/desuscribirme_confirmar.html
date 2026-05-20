@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}No recibir más emails - Portal Escolar{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-10">
+  <div class="bg-white border border-slate-200 rounded-lg p-6 text-center">
+    <h1 class="text-xl font-semibold text-slate-900 mb-3">Cancelar emails del portal</h1>
+    <p class="text-sm text-slate-600 mb-5">
+      Hola <strong>{{ perfil.user.first_name|default:perfil.user.username }}</strong>, vamos a desactivar
+      <strong>todos los emails automáticos</strong> que te enviamos sobre los avisos del aula.
+    </p>
+    <p class="text-xs text-slate-500 mb-6">
+      Vas a poder volver a activarlos cuando quieras desde tu cuenta en el portal.
+    </p>
+    <form method="post" class="flex justify-center gap-2">
+      {% csrf_token %}
+      <a href="{% url 'comunicacion:landing' %}"
+         class="text-sm border border-slate-300 hover:bg-slate-50 text-slate-700 py-2 px-4 rounded-md">
+        Cancelar
+      </a>
+      <button type="submit"
+              class="text-sm bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-md">
+        Sí, no quiero más emails
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

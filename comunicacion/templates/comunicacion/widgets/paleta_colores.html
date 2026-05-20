@@ -1,0 +1,43 @@
+{% load static %}
+<div class="paleta-colores" style="display:flex; flex-wrap:wrap; gap:10px; padding:6px 0;">
+  {% for hex, etiqueta in paleta %}
+  <label style="display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;">
+    <input type="radio" name="{{ widget.name }}" value="{{ hex }}"
+           {% if valor == hex %}checked{% endif %}
+           style="position:absolute; opacity:0; pointer-events:none;">
+    <span style="display:inline-block; width:42px; height:42px; border-radius:50%;
+                 background:{{ hex }};
+                 border:3px solid {% if valor == hex %}#1f2937{% else %}#fff{% endif %};
+                 box-shadow:0 0 0 1px #d1d5db, 0 1px 3px rgba(0,0,0,0.12);
+                 transition:transform 0.1s ease, border-color 0.1s ease;"></span>
+    <small style="font-size:10px; color:#6b7280;">{{ etiqueta }}</small>
+  </label>
+  {% endfor %}
+  <label style="display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;">
+    <input type="radio" name="{{ widget.name }}" value=""
+           {% if not valor %}checked{% endif %}
+           style="position:absolute; opacity:0; pointer-events:none;">
+    <span style="display:inline-flex; align-items:center; justify-content:center;
+                 width:42px; height:42px; border-radius:50%;
+                 background:#f3f4f6;
+                 border:3px solid {% if not valor %}#1f2937{% else %}#fff{% endif %};
+                 box-shadow:0 0 0 1px #d1d5db, 0 1px 3px rgba(0,0,0,0.12);
+                 font-size:18px; color:#6b7280;">✕</span>
+    <small style="font-size:10px; color:#6b7280;">Auto</small>
+  </label>
+</div>
+<script>
+(function() {
+  // Al hacer click en cualquier label de la paleta, marcar el circulo y
+  // resaltarlo con borde mas oscuro.
+  document.querySelectorAll('.paleta-colores label').forEach(function(lbl) {
+    lbl.addEventListener('click', function() {
+      document.querySelectorAll('.paleta-colores span').forEach(function(s) {
+        s.style.borderColor = '#fff';
+      });
+      var span = lbl.querySelector('span');
+      if (span) span.style.borderColor = '#1f2937';
+    });
+  });
+})();
+</script>

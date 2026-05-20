@@ -1,0 +1,13 @@
+{% with perfil=docente.perfil_docente %}
+{% if perfil.foto %}
+<img src="{{ perfil.foto.url }}" alt="{{ docente.first_name }} {{ docente.last_name }}"
+  class="{{ classes }} rounded-full object-cover border border-white shadow-sm shrink-0">
+{% else %}
+{% with iniciales=docente.first_name|slice:":1"|upper|add:docente.last_name|slice:":1"|upper %}
+<span class="{{ classes }} rounded-full flex items-center justify-center font-bold text-white border border-white shadow-sm shrink-0"
+   style="background-color: {% if materia %}{{ materia.get_color }}{% else %}#6b7280{% endif %};">
+{% if docente.first_name %}{{ docente.first_name|slice:":1"|upper }}{% if docente.last_name %}{{ docente.last_name|slice:":1"|upper }}{% endif %}{% else %}?{% endif %}
+</span>
+{% endwith %}
+{% endif %}
+{% endwith %}

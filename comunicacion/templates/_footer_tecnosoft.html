@@ -1,0 +1,14 @@
+<footer class="mt-10 border-t border-gray-200 bg-white">
+  <div class="max-w-6xl mx-auto px-4 py-6 text-center">
+    <div class="text-sm text-gray-500 mb-2">
+      © {% now "Y" %} {{ config.nombre_escuela|default:"Portal Escuela" }}
+      {% if config.email_contacto %} · {{ config.email_contacto }}{% endif %}
+    </div>
+    <div class="text-sm text-gray-700 font-bold mb-1">
+      Sistema gestionado por <a href="https://tsgestion.com.ar" target="_blank" rel="noopener" class="text-indigo-700 hover:underline">tsgestion.com.ar</a> de <span class="text-gray-900">Tecnosoft</span>
+    </div>
+    <div class="text-xs text-gray-500">
+      Desarrollamos software a medida para tu institución, comercio o empresa · <a href="https://tsgestion.com.ar" target="_blank" rel="noopener" class="text-indigo-600 hover:underline font-medium">Contactanos</a>
+    </div>
+  </div>
+</footer>

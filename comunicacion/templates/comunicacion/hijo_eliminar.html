@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar hijo/a - Portal Escolar{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-6">
+  <div class="bg-white border border-slate-200 rounded-lg p-6">
+    <h1 class="text-xl font-semibold text-slate-900 mb-2">¿Eliminar a {{ hijo.nombre }}?</h1>
+    <p class="text-sm text-slate-600 mb-5">
+      Vas a dejar de recibir avisos del grado <strong>{{ hijo.grado }}</strong>.
+      Podés volver a agregarlo más tarde si querés.
+    </p>
+
+    <form method="post" class="flex justify-end gap-2">
+      {% csrf_token %}
+      <a href="{% url 'comunicacion:mi_cuenta' %}"
+         class="text-sm border border-slate-300 hover:bg-slate-50 text-slate-700 py-2 px-4 rounded-md">
+        Cancelar
+      </a>
+      <button type="submit"
+              class="text-sm bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md">
+        Sí, eliminar
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

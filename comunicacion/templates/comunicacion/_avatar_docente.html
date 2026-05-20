@@ -1,0 +1,9 @@
+{% comment %}
+Avatar circular del docente.
+Uso: {% include "comunicacion/_avatar_docente.html" with docente=c.autor materia=c.materia size="sm" %}
+size: 'xs' (24px), 'sm' (32px), 'md' (40px), 'lg' (56px)
+{% endcomment %}
+{% if size == 'xs' %}{% with classes="h-6 w-6 text-[10px]" %}{% include "comunicacion/_avatar_docente_inner.html" %}{% endwith %}
+{% elif size == 'lg' %}{% with classes="h-14 w-14 text-base" %}{% include "comunicacion/_avatar_docente_inner.html" %}{% endwith %}
+{% elif size == 'md' %}{% with classes="h-10 w-10 text-sm" %}{% include "comunicacion/_avatar_docente_inner.html" %}{% endwith %}
+{% else %}{% with classes="h-8 w-8 text-xs" %}{% include "comunicacion/_avatar_docente_inner.html" %}{% endwith %}{% endif %}

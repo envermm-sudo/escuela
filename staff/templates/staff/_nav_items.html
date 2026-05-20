@@ -1,0 +1,69 @@
+{% url 'staff:dashboard' as url_dash %}
+{% url 'staff:comunicados_lista' as url_com %}
+{% url 'staff:galerias_lista' as url_gal %}
+{% url 'staff:mis_asignaciones' as url_asig %}
+{% url 'staff:mi_perfil' as url_mi %}
+
+<a href="{{ url_dash }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if request.path == url_dash %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>🏠</span> Inicio
+</a>
+
+<a href="{{ url_com }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/comunicados' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>📢</span> Comunicados
+</a>
+
+<a href="{{ url_gal }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/galerias' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>🖼️</span> Galerías
+</a>
+
+{% if perfil_actual and perfil_actual.rol == 'docente' %}
+<a href="{{ url_asig }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/asignaciones' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>🎓</span> Mis asignaciones
+</a>
+{% endif %}
+
+{% if request.user.is_superuser or es_directivo %}
+<div class="border-t border-gray-200 my-2"></div>
+<div class="px-3 text-xs uppercase text-gray-400 font-semibold tracking-wide">Director</div>
+
+<a href="{% url 'staff:gestion_dashboard' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/gestion' in request.path and '/staff/gestion/personal' not in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>🛠️</span> Gestión
+</a>
+
+<a href="{% url 'staff:personal_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/personal' in request.path or '/staff/gestion/personal' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>👥</span> Personal
+</a>
+
+<a href="{% url 'staff:comunicado_institucional_nuevo' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-purple-700 hover:bg-purple-50">
+  <span>🏫</span> Aviso institucional
+</a>
+
+<a href="{% url 'staff:estadisticas' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/estadisticas' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>📊</span> Estadísticas
+</a>
+
+<a href="{% url 'staff:configuracion' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/configuracion' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>⚙️</span> Configuración
+</a>
+
+<a href="{% url 'staff:auditoria' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/auditoria' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>📋</span> Auditoría
+</a>
+{% endif %}
+
+{% if not request.user.is_superuser and not es_directivo %}
+<a href="{% url 'staff:personal_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/personal' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+<span>👥</span> Personal
+</a>
+{% endif %}
+
+<div class="border-t border-gray-200 my-2"></div>
+<a href="{{ url_mi }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if request.path == url_mi %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+  <span>🪪</span> Mi perfil
+</a>
+
+{% if request.user.is_superuser %}
+<a href="/admin/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-purple-600 hover:bg-purple-50 text-sm">
+  <span>🔧</span> Admin avanzado
+</a>
+{% endif %}

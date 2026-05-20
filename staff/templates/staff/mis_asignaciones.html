@@ -1,0 +1,44 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Mis asignaciones{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+  <h1 class="text-2xl font-bold text-gray-900">🎓 Mis asignaciones</h1>
+  <p class="text-sm text-gray-500 mt-1 mb-5">
+    {% if es_directivo %}
+    Como {{ perfil.get_rol_display|lower }} ves todos los grados y materias de la institución.
+    {% else %}
+    Estos son los grados y materias que tenés asignados. Solo podés crear comunicados con estas combinaciones.
+    {% endif %}
+  </p>
+
+  {% if por_grado %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    {% for grado, materias in por_grado.items %}
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      <div class="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+        <span>🎓</span> {{ grado }}
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        {% for m in materias %}
+        <span class="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded font-medium">{{ m }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+    <div class="text-5xl mb-3">📭</div>
+    <p class="text-gray-700 font-medium">No tenés asignaciones todavía.</p>
+    <p class="text-sm text-gray-500 mt-1">Pedile al director que te asigne grados y materias desde el panel de admin.</p>
+  </div>
+  {% endif %}
+
+  <div class="mt-6 text-xs text-gray-400">
+    Si necesitás cambios en tus asignaciones, contactá a la dirección de la escuela.
+  </div>
+
+</div>
+{% endblock %}

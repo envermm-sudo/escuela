@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Mi cuenta - {{ config.nombre_institucion|default:"Portal Escolar" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-900">Mi cuenta</h1>
+    <p class="text-sm text-slate-500 mt-1">Gestioná tus datos, tus hijos/as y cómo querés recibir los avisos.</p>
+  </div>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="mb-4 rounded-md border px-4 py-3 text-sm
+                  {% if m.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
+                  {% elif m.tags == 'error' %}bg-red-50 border-red-200 text-red-800
+                  {% else %}bg-slate-50 border-slate-200 text-slate-700{% endif %}">
+        {{ m }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- DATOS PERSONALES -->
+    <section class="bg-white border border-slate-200 rounded-lg p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-slate-900 mb-4">Datos personales</h2>
+
+      <div class="flex items-start gap-4 mb-5">
+        <div class="shrink-0">
+          {% if perfil.foto %}
+            <img src="{{ perfil.foto.url }}" alt="Foto" class="w-20 h-20 rounded-full object-cover border border-slate-200">
+          {% else %}
+            <div class="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-2xl font-semibold">
+              {{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Cambiar foto</label>
+          <input type="file" name="foto" accept="image/*"
+                 class="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-slate-300 file:text-sm file:bg-slate-50 file:text-slate-700 file:cursor-pointer">
+          <p class="text-xs text-slate-500 mt-1">JPG/PNG. Se redimensiona automáticamente.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Nombre</label>
+          <input type="text" name="first_name" required value="{{ request.user.first_name }}"
+                 class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Apellido</label>
+          <input type="text" name="last_name" required value="{{ request.user.last_name }}"
+                 class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Teléfono</label>
+          <input type="text" name="telefono" value="{{ perfil.telefono }}"
+                 class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">DNI</label>
+          <input type="text" name="dni" value="{{ perfil.dni }}"
+                 class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTIFICACIONES -->
+    <section class="bg-white border border-slate-200 rounded-lg p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-slate-900 mb-1">Notificaciones por email</h2>
+      <p class="text-sm text-slate-500 mb-4">
+        Elegí cuándo querés recibir avisos al correo
+        <strong class="text-slate-700">{{ request.user.email }}</strong>.
+      </p>
+
+      <div class="space-y-2.5">
+        {% for valor, etiqueta in opciones_notif %}
+          <label class="flex items-start gap-3 p-3 border border-slate-200 rounded-md cursor-pointer hover:bg-slate-50 transition
+                        {% if perfil.tipo_notificacion == valor %}bg-emerald-50 border-emerald-300{% endif %}">
+            <input type="radio" name="tipo_notificacion" value="{{ valor }}"
+                   {% if perfil.tipo_notificacion == valor %}checked{% endif %}
+                   class="mt-0.5">
+            <div class="flex-1">
+              <div class="text-sm font-medium text-slate-900">{{ etiqueta }}</div>
+              {% if valor == 'todos' %}
+                <div class="text-xs text-slate-500 mt-0.5">Recibís un email cada vez que se publica un aviso en el aula de tu hijo/a.</div>
+              {% elif valor == 'urgentes' %}
+                <div class="text-xs text-slate-500 mt-0.5">Solo recibís los avisos que el docente o director marca como urgentes.</div>
+              {% else %}
+                <div class="text-xs text-slate-500 mt-0.5">No te llega ningún email. Asumís la responsabilidad de revisar el portal por tu cuenta.</div>
+              {% endif %}
+            </div>
+          </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="flex justify-end">
+      <button type="submit"
+              class="bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-5 rounded-md text-sm transition">
+        Guardar cambios
+      </button>
+    </div>
+  </form>
+
+  <!-- MIS HIJOS (fuera del form principal) -->
+  <section class="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 mt-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900">Mis hijos/as</h2>
+        <p class="text-sm text-slate-500 mt-0.5">Cargá los hijos/as y el aula que cursan, así recibís los avisos correctos.</p>
+      </div>
+      <a href="{% url 'comunicacion:hijo_crear' %}"
+         class="text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 px-3 rounded-md transition">
+        + Agregar
+      </a>
+    </div>
+
+    {% if hijos %}
+      <ul class="divide-y divide-slate-200 border border-slate-200 rounded-md overflow-hidden">
+        {% for h in hijos %}
+          <li class="flex items-center justify-between px-4 py-3 hover:bg-slate-50">
+            <div>
+              <div class="text-sm font-medium text-slate-900">{{ h.nombre }}</div>
+              <div class="text-xs text-slate-500">{{ h.grado }}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="{% url 'comunicacion:hijo_editar' h.pk %}"
+                 class="text-xs text-slate-600 hover:text-slate-900 underline underline-offset-2">Editar</a>
+              <a href="{% url 'comunicacion:hijo_eliminar' h.pk %}"
+                 class="text-xs text-red-600 hover:text-red-800 underline underline-offset-2">Eliminar</a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="text-center py-8 text-sm text-slate-500 border border-dashed border-slate-300 rounded-md">
+        Todavía no cargaste ningún hijo/a.
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

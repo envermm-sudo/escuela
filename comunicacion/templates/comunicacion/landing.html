@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titulo %}{{ config.nombre_escuela|default:"Portal Escuela" }}{% endblock %}
+{% block content %}
+{% if config.mostrar_portada_grande and config.portada %}
+<div class="relative w-full h-64 sm:h-80 mb-8 overflow-hidden">
+  <img src="{{ config.portada.url }}" alt="" class="w-full h-full object-cover">
+  <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
+    <h1 class="text-3xl sm:text-4xl font-bold text-white mb-2">
+      {{ config.mensaje_bienvenida|default:"Bienvenidos al Portal" }}
+    </h1>
+    {% if config.mensaje_secundario %}
+    <p class="text-white/90 text-sm sm:text-base max-w-xl">{{ config.mensaje_secundario }}</p>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="max-w-5xl mx-auto px-4 pt-8 pb-6 text-center">
+  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+    {{ config.mensaje_bienvenida|default:"Bienvenidos al Portal" }}
+  </h1>
+  {% if config.mensaje_secundario %}
+  <p class="text-gray-600 mt-2 text-sm sm:text-base">{{ config.mensaje_secundario }}</p>
+  {% else %}
+  <p class="text-gray-600 mt-2 text-sm sm:text-base">Elegí el aula de tu hijo/a para ver los comunicados.</p>
+  {% endif %}
+</div>
+{% endif %}
+<div class="max-w-5xl mx-auto px-4 pb-10">
+{% if not turno_actual %}
+{# PASO 1: el padre elige el turno #}
+{% if turnos_disponibles %}
+<div class="text-center pt-4 pb-2">
+  <h2 class="text-base sm:text-lg font-semibold text-gray-700">¿Dónde asiste tu hijo/a?</h2>
+  <p class="text-sm text-gray-500 mt-1">Seleccioná el turno para encontrar el aula correspondiente</p>
+</div>
+<div class="flex flex-wrap justify-center gap-4 sm:gap-6 mt-6">
+  {% for t in turnos_disponibles %}
+  <a href="?turno={{ t.codigo }}"
+     class="group block bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:border-indigo-400 hover:-translate-y-0.5 transition-all text-center w-full sm:w-64">
+    <div class="text-6xl mb-4">{{ t.icono }}</div>
+    <h3 class="text-2xl font-bold text-gray-900 group-hover:text-indigo-700">{{ t.etiqueta }}</h3>
+    <p class="text-sm text-gray-500 mt-1">{{ t.cantidad }} aula{{ t.cantidad|pluralize:"s" }} disponible{{ t.cantidad|pluralize:"s" }}</p>
+    <span class="inline-block mt-4 px-4 py-1.5 bg-gray-50 group-hover:bg-indigo-50 group-hover:text-indigo-700 rounded-full text-xs font-semibold text-gray-600 transition">Ver grados →</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-white border border-gray-200 rounded-xl p-10 text-center max-w-xl mx-auto">
+  <div class="text-5xl mb-3">🏫</div>
+  <p class="text-gray-700 font-medium">Todavía no hay grados cargados.</p>
+  {% if request.user.is_superuser %}
+  <a href="/staff/gestion/grados/" class="inline-block mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">+ Crear grados</a>
+  {% endif %}
+</div>
+{% endif %}
+{% else %}
+{# PASO 2: ya seleccionó turno, mostrar sus grados #}
+<div class="max-w-3xl mx-auto">
+
+  <div class="flex items-center justify-between mb-4">
+    <a href="{% url 'comunicacion:landing' %}" class="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">← Cambiar turno</a>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+    <div class="text-5xl">{{ turno_actual.icono }}</div>
+    <div>
+      <div class="font-bold text-gray-900 text-xl">Turno {{ turno_actual.etiqueta }}</div>
+      <div class="text-sm text-gray-500">{{ turno_actual.cantidad }} aula{{ turno_actual.cantidad|pluralize:"s" }} disponibles</div>
+    </div>
+  </div>
+
+  <div class="text-center mb-4">
+    <h2 class="text-base font-semibold text-gray-700">Ahora elegí el grado de tu hijo/a</h2>
+    <p class="text-xs text-gray-500 mt-1">Tocá el grado para ver los comunicados y novedades del aula</p>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    {% for g in grados_filtrados %}
+    <a href="{% url 'comunicacion:muro_grado' g.slug %}"
+       class="group block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-300 hover:-translate-y-0.5 transition-all text-center">
+      <div class="text-2xl font-bold text-gray-900 group-hover:text-indigo-700">{{ g.nombre }}</div>
+      <div class="text-xs text-gray-500 mt-1">{{ g.get_turno_display }}</div>
+      <span class="inline-block mt-3 text-xs text-indigo-500 group-hover:underline">Ver aula →</span>
+    </a>
+    {% endfor %}
+  </div>
+
+</div>
+
+{% endif %}
+</div>
+{% endblock %}

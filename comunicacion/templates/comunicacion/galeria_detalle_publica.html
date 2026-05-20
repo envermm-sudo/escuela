@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}{{ galeria.titulo }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .lightbox-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-overlay.active { display: flex; }
+  .lightbox-img {
+    max-width: 95vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .lightbox-close, .lightbox-prev, .lightbox-next {
+    position: absolute;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover {
+    background: rgba(255,255,255,0.25);
+  }
+  .lightbox-close { top: 20px; right: 20px; width: 44px; height: 44px; font-size: 20px; }
+  .lightbox-prev, .lightbox-next { top: 50%; transform: translateY(-50%); width: 50px; height: 50px; font-size: 28px; }
+  .lightbox-prev { left: 20px; }
+  .lightbox-next { right: 20px; }
+  .lightbox-counter {
+    position: absolute;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+  .lightbox-caption {
+    position: absolute;
+    bottom: 60px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    max-width: 80vw;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+
+  <a href="javascript:history.back()" class="text-sm text-gray-500 hover:text-gray-700">← Volver</a>
+
+  <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5 mt-2">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ galeria.titulo }}</h1>
+    <div class="flex flex-wrap gap-3 text-sm text-gray-500 mt-2">
+      <span>📅 {{ galeria.fecha_evento|date:"d \d\e F \d\e Y" }}</span>
+      <span>·</span>
+      <span>📷 {{ fotos|length }} foto{{ fotos|length|pluralize:"s" }}</span>
+    </div>
+    {% if galeria.descripcion %}
+    <p class="text-gray-700 mt-3 whitespace-pre-line">{{ galeria.descripcion }}</p>
+    {% endif %}
+  </div>
+
+  {% if fotos %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+    {% for foto in fotos %}
+    <button type="button" data-foto-index="{{ forloop.counter0 }}"
+            class="block aspect-square bg-gray-100 rounded-lg overflow-hidden hover:opacity-90 transition foto-thumb">
+      <img src="{{ foto.imagen.url }}" alt="{{ foto.descripcion|default:'' }}"
+           class="w-full h-full object-cover" loading="lazy">
+    </button>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+    <div class="text-5xl mb-3">📷</div>
+    <p class="text-gray-500">Esta galería todavía no tiene fotos.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<div id="lightbox" class="lightbox-overlay" role="dialog" aria-modal="true">
+  <button class="lightbox-close" id="lb-close" aria-label="Cerrar">✕</button>
+  <button class="lightbox-prev" id="lb-prev" aria-label="Anterior">‹</button>
+  <img class="lightbox-img" id="lb-img" src="" alt="">
+  <button class="lightbox-next" id="lb-next" aria-label="Siguiente">›</button>
+  <div class="lightbox-caption" id="lb-caption" style="display:none;"></div>
+  <div class="lightbox-counter" id="lb-counter"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var fotos = [
+    {% for foto in fotos %}
+    { src: '{{ foto.imagen.url }}', caption: '{{ foto.descripcion|default:""|escapejs }}' }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  var lightbox = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lb-img');
+  var lbCaption = document.getElementById('lb-caption');
+  var lbCounter = document.getElementById('lb-counter');
+  var current = 0;
+
+  function show(index) {
+    if (index < 0) index = fotos.length - 1;
+    if (index >= fotos.length) index = 0;
+    current = index;
+    var f = fotos[index];
+    lbImg.src = f.src;
+    if (f.caption) {
+      lbCaption.textContent = f.caption;
+      lbCaption.style.display = 'block';
+    } else {
+      lbCaption.style.display = 'none';
+    }
+    lbCounter.textContent = (index + 1) + ' / ' + fotos.length;
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.foto-thumb').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      show(parseInt(btn.getAttribute('data-foto-index'), 10));
+    });
+  });
+
+  document.getElementById('lb-close').addEventListener('click', close);
+  document.getElementById('lb-prev').addEventListener('click', function() { show(current - 1); });
+  document.getElementById('lb-next').addEventListener('click', function() { show(current + 1); });
+
+  lightbox.addEventListener('click', function(e) {
+    if (e.target === lightbox) close();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (!lightbox.classList.contains('active')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
+  });
+})();
+</script>
+{% endblock %}

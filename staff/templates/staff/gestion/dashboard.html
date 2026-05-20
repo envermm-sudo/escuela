@@ -1,0 +1,58 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Gestión{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-1">🛠️ Gestión institucional</h1>
+  <p class="text-sm text-gray-500 mb-6">Administrá materias, grados, personal y la institución.</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+    <a href="{% url 'staff:gestion_materias' %}" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-300 transition">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">📚</span>
+        <h2 class="font-semibold text-gray-900">Materias</h2>
+      </div>
+      <p class="text-sm text-gray-600">{{ cant_materias }} materia{{ cant_materias|pluralize:"s" }} cargada{{ cant_materias|pluralize:"s" }}</p>
+      <p class="text-xs text-indigo-600 mt-2">Gestionar →</p>
+    </a>
+
+    <a href="{% url 'staff:gestion_grados' %}" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-300 transition">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">🏫</span>
+        <h2 class="font-semibold text-gray-900">Grados</h2>
+      </div>
+      <p class="text-sm text-gray-600">{{ cant_grados }} grado{{ cant_grados|pluralize:"s" }} activo{{ cant_grados|pluralize:"s" }}</p>
+      <p class="text-xs text-indigo-600 mt-2">Gestionar →</p>
+    </a>
+
+    <a href="{% url 'staff:personal_lista' %}" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-300 transition">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">👥</span>
+        <h2 class="font-semibold text-gray-900">Personal</h2>
+      </div>
+      <p class="text-sm text-gray-600">{{ cant_docentes }} persona{{ cant_docentes|pluralize:"s" }} (docentes, preceptores, directivos)</p>
+      <p class="text-xs text-indigo-600 mt-2">Gestionar →</p>
+    </a>
+
+    <a href="{% url 'staff:configuracion' %}" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-300 transition">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">⚙️</span>
+        <h2 class="font-semibold text-gray-900">Configuración</h2>
+      </div>
+      <p class="text-sm text-gray-600">Logo, portada, datos de la escuela</p>
+      <p class="text-xs text-indigo-600 mt-2">Editar →</p>
+    </a>
+
+    <a href="{% url 'staff:auditoria' %}" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-300 transition">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">📋</span>
+        <h2 class="font-semibold text-gray-900">Auditoría</h2>
+      </div>
+      <p class="text-sm text-gray-600">Registro de cambios del sistema</p>
+      <p class="text-xs text-indigo-600 mt-2">Ver →</p>
+    </a>
+
+  </div>
+</div>
+{% endblock %}

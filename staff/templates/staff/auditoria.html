@@ -1,0 +1,45 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Auditoría{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-1">📋 Registro de auditoría</h1>
+  <p class="text-sm text-gray-500 mb-5">Últimos 200 cambios en el sistema. Quién hizo qué y cuándo.</p>
+
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-2 font-semibold text-gray-700">Fecha y hora</th>
+          <th class="text-left px-4 py-2 font-semibold text-gray-700">Usuario</th>
+          <th class="text-left px-4 py-2 font-semibold text-gray-700">Acción</th>
+          <th class="text-left px-4 py-2 font-semibold text-gray-700">Tipo</th>
+          <th class="text-left px-4 py-2 font-semibold text-gray-700">Objeto</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for log in logs %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 text-gray-700 whitespace-nowrap text-xs">{{ log.timestamp|date:"d/m/Y H:i" }}</td>
+          <td class="px-4 py-2 text-gray-900 font-medium">
+            {% if log.usuario %}{{ log.usuario.first_name|default:log.usuario.username }}{% else %}—{% endif %}
+          </td>
+          <td class="px-4 py-2">
+            {% if log.accion == 'crear' %}<span class="text-xs px-2 py-0.5 rounded bg-green-50 text-green-700">+ Crear</span>
+            {% elif log.accion == 'editar' %}<span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700">✎ Editar</span>
+            {% elif log.accion == 'eliminar' %}<span class="text-xs px-2 py-0.5 rounded bg-red-50 text-red-700">✗ Eliminar</span>
+            {% else %}<span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700">{{ log.accion }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 text-gray-600">{{ log.modelo }}</td>
+          <td class="px-4 py-2 text-gray-500">#{{ log.objeto_id }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-10 text-center text-gray-400">No hay registros de auditoría todavía.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

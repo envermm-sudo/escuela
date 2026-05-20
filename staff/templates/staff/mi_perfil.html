@@ -1,0 +1,158 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Mi perfil{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-1">⚙️ Mi perfil</h1>
+  <p class="text-sm text-gray-500 mb-5">Editá tus datos personales y tu contraseña.</p>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-5">
+    {% csrf_token %}
+
+    <!-- Foto + nombre -->
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h2 class="font-semibold text-gray-900 mb-4">👤 Datos personales</h2>
+
+      <div class="flex flex-col sm:flex-row gap-5">
+        <div class="text-center shrink-0">
+          {% if perfil.foto %}
+          <img src="{{ perfil.foto.url }}" alt="" id="preview-foto"
+               class="h-32 w-32 rounded-full object-cover border-4 border-gray-200 mx-auto">
+          {% else %}
+          <div id="preview-foto" class="h-32 w-32 rounded-full bg-indigo-500 text-white flex items-center justify-center text-3xl font-bold border-4 border-gray-200 mx-auto">
+            {{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
+          </div>
+          {% endif %}
+          <label class="block mt-2">
+            <input type="file" name="foto" id="input-foto" accept="image/*" class="hidden">
+            <span class="inline-block px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg cursor-pointer">
+              📷 Cambiar foto
+            </span>
+          </label>
+        </div>
+
+        <div class="flex-1 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+              <input type="text" name="first_name" value="{{ request.user.first_name }}" required
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
+              <input type="text" name="last_name" value="{{ request.user.last_name }}" required
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Título profesional</label>
+            <input type="text" name="titulo" value="{{ perfil.titulo }}" maxlength="120"
+                   placeholder="Ej: Profesora de Matemáticas"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <input type="text" name="telefono" value="{{ perfil.telefono }}" maxlength="30"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+              <input type="text" name="dni" value="{{ perfil.dni }}" maxlength="20"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+          </div>
+
+          <div class="text-xs text-gray-500 mt-2">
+            Email (para iniciar sesión): <strong>{{ request.user.email|default:request.user.username }}</strong>
+            <br><span class="text-gray-400">Si querés cambiar tu email, pedile al director que lo modifique en el admin.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cambiar contraseña -->
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h2 class="font-semibold text-gray-900 mb-1">🔒 Cambiar contraseña</h2>
+      <p class="text-xs text-gray-500 mb-4">Solo completá esto si querés cambiarla. Si dejás los campos vacíos se mantiene la actual.</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
+          <input type="password" name="password_actual" autocomplete="current-password"
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
+            <input type="password" name="password_nueva" autocomplete="new-password" minlength="6"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Repetir nueva</label>
+            <input type="password" name="password_repetir" autocomplete="new-password" minlength="6"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Asignaciones (solo lectura) -->
+    {% if asignaciones %}
+    <div class="bg-white border border-gray-200 rounded-xl p-5">
+      <h2 class="font-semibold text-gray-900 mb-3">🎓 Mis asignaciones (solo lectura)</h2>
+      <p class="text-xs text-gray-500 mb-3">Para cambios en tus grados o materias, contactá al director.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {% for a in asignaciones %}
+        <div class="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg text-sm">
+          <span class="text-gray-700">{{ a.grado }}</span>
+          <span class="font-medium text-xs px-2 py-0.5 rounded text-white"
+                style="background-color: {{ a.materia.get_color }};">{{ a.materia.nombre }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Botón guardar -->
+    <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+      <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg">
+        💾 Guardar cambios
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var input = document.getElementById('input-foto');
+  var preview = document.getElementById('preview-foto');
+  if (!input || !preview) return;
+
+  input.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      // Si el preview es un div (sin foto), reemplazarlo por img
+      if (preview.tagName !== 'IMG') {
+        var img = document.createElement('img');
+        img.id = 'preview-foto';
+        img.className = 'h-32 w-32 rounded-full object-cover border-4 border-gray-200 mx-auto';
+        img.src = ev.target.result;
+        preview.parentNode.replaceChild(img, preview);
+        preview = img;
+      } else {
+        preview.src = ev.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+})();
+</script>
+{% endblock %}

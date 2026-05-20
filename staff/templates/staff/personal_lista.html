@@ -1,0 +1,132 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Personal{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+    <div>
+      {% if es_gestor %}
+      <a href="{% url 'staff:gestion_dashboard' %}" class="text-sm text-gray-500 hover:text-gray-700">← Gestión</a>
+      {% endif %}
+      <h1 class="text-2xl font-bold text-gray-900 mt-1">👥 Personal</h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ cant_total }} persona{{ cant_total|pluralize:"s" }} en la institución</p>
+    </div>
+    {% if es_gestor %}
+    <a href="{% url 'staff:gestion_personal_nuevo' %}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+      + Nuevo personal
+    </a>
+    {% endif %}
+  </div>
+
+  <form method="get" class="bg-white border border-gray-200 rounded-xl p-3 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+    <input type="text" name="q" value="{{ busqueda }}" placeholder="🔍 Nombre, email, DNI..."
+           class="px-3 py-2 border border-gray-300 rounded-lg text-sm sm:col-span-2">
+    <select name="rol" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      <option value="">Todos los roles</option>
+      <option value="docente" {% if rol_filtro == 'docente' %}selected{% endif %}>Docentes</option>
+      <option value="preceptor" {% if rol_filtro == 'preceptor' %}selected{% endif %}>Preceptores</option>
+      <option value="directivo" {% if rol_filtro == 'directivo' %}selected{% endif %}>Directivos</option>
+    </select>
+  </form>
+
+  {% if personal %}
+  {% if es_gestor %}
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-2 text-left text-gray-700 font-semibold">Persona</th>
+          <th class="px-4 py-2 text-left text-gray-700 font-semibold">Rol</th>
+          <th class="px-4 py-2 text-left text-gray-700 font-semibold">Email</th>
+          <th class="px-4 py-2 text-center text-gray-700 font-semibold">Asign.</th>
+          <th class="px-4 py-2 text-right text-gray-700 font-semibold">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in personal %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">
+            <a href="{% url 'staff:docente_ficha' p.pk %}" class="flex items-center gap-3 hover:text-indigo-600">
+              {% if p.foto %}
+              <img src="{{ p.foto.url }}" alt="" class="h-9 w-9 rounded-full object-cover border border-gray-200">
+              {% else %}
+              <div class="h-9 w-9 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">
+                {{ p.user.first_name|slice:":1"|upper }}{{ p.user.last_name|slice:":1"|upper }}
+              </div>
+              {% endif %}
+              <div>
+                <div class="font-medium text-gray-900">
+                  {% if p.user.first_name %}{{ p.user.first_name }} {{ p.user.last_name }}{% else %}{{ p.user.username }}{% endif %}
+                </div>
+                {% if p.titulo %}<div class="text-xs text-gray-500">{{ p.titulo }}</div>{% endif %}
+              </div>
+            </a>
+          </td>
+          <td class="px-4 py-2">
+            {% if p.rol == 'directivo' %}<span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">Directivo</span>
+            {% elif p.rol == 'preceptor' %}<span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">Preceptor</span>
+            {% else %}<span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">Docente</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 text-gray-600 text-xs">{{ p.user.email }}</td>
+          <td class="px-4 py-2 text-center text-gray-700">{{ p.asignaciones.count }}</td>
+          <td class="px-4 py-2 text-right whitespace-nowrap">
+            <a href="{% url 'staff:gestion_personal_matriz' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-medium" title="Asignar materias y grados">
+              🎓 Materias
+            </a>
+            <a href="{% url 'staff:gestion_personal_editar' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-xs font-medium ml-1">
+              ✏️ Editar
+            </a>
+            <a href="{% url 'staff:gestion_personal_reset_password' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded text-xs font-medium ml-1" title="Resetear contraseña">
+              🔑
+            </a>
+            <a href="{% url 'staff:gestion_personal_eliminar' p.pk %}" class="inline-flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded text-xs font-medium ml-1" title="Eliminar">
+              🗑️
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for p in personal %}
+    <a href="{% url 'staff:docente_ficha' p.pk %}"
+       class="group bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-indigo-300 transition flex items-center gap-3">
+      {% if p.foto %}
+      <img src="{{ p.foto.url }}" alt="" class="h-14 w-14 rounded-full object-cover border border-gray-200 shrink-0">
+      {% else %}
+      <div class="h-14 w-14 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold shrink-0 text-lg">
+        {{ p.user.first_name|slice:":1"|upper }}{{ p.user.last_name|slice:":1"|upper }}
+      </div>
+      {% endif %}
+
+      <div class="min-w-0 flex-1">
+        <div class="font-semibold text-gray-900 truncate group-hover:text-indigo-700">
+          {% if p.user.first_name %}{{ p.user.first_name }} {{ p.user.last_name }}{% else %}{{ p.user.username }}{% endif %}
+        </div>
+        <div class="text-xs text-gray-500 truncate">
+          {% if p.titulo %}{{ p.titulo }}{% else %}{{ p.get_rol_display }}{% endif %}
+        </div>
+        <div class="text-xs text-gray-400 mt-0.5">
+          {{ p.asignaciones.count }} asignación{{ p.asignaciones.count|pluralize:"es" }}
+        </div>
+      </div>
+
+      <span class="text-gray-300 group-hover:text-indigo-500">→</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+    <div class="text-5xl mb-3">👥</div>
+    <p class="text-gray-700 font-medium">No hay personal{% if busqueda or rol_filtro %} que coincida con los filtros{% endif %}.</p>
+    {% if es_gestor and not busqueda and not rol_filtro %}
+    <a href="{% url 'staff:gestion_personal_nuevo' %}" class="inline-block mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">+ Crear el primero</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

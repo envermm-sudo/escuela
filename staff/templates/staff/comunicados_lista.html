@@ -1,0 +1,107 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Comunicados{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+  <!-- Header de la pagina -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">📢 Comunicados</h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ page.paginator.count }} comunicado{{ page.paginator.count|pluralize:"s" }} en total</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'staff:comunicado_crear' %}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">+ Nuevo comunicado</a>
+      {% if request.user.is_superuser or es_directivo %}
+      <a href="{% url 'staff:comunicado_institucional_nuevo' %}" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg">🏫 Institucional</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get" class="bg-white border border-gray-200 rounded-xl p-3 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+    <input type="text" name="q" value="{{ busqueda }}" placeholder="🔍 Buscar..."
+           class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+    <select name="tipo" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <option value="">Todos los tipos</option>
+      {% for cod, etiqueta in tipos %}
+      <option value="{{ cod }}" {% if tipo == cod %}selected{% endif %}>{{ etiqueta }}</option>
+      {% endfor %}
+    </select>
+    <select name="grado" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <option value="">Todos los grados</option>
+      {% for g in grados_filtro %}
+      <option value="{{ g.id }}" {% if grado_id == g.id|stringformat:'s' %}selected{% endif %}>{{ g }}</option>
+      {% endfor %}
+    </select>
+    <select name="estado" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <option value="">Todos los estados</option>
+      <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activos</option>
+      <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+      <option value="fijado" {% if estado == 'fijado' %}selected{% endif %}>📌 Fijados</option>
+      <option value="urgente" {% if estado == 'urgente' %}selected{% endif %}>🚨 Urgentes</option>
+    </select>
+    <button type="submit" class="px-4 py-2 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition">Filtrar</button>
+  </form>
+
+  <!-- Lista -->
+  {% if page.object_list %}
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <ul class="divide-y divide-gray-100">
+      {% for c in page.object_list %}
+      <li>
+        <a href="{% url 'staff:comunicado_detalle' c.pk %}" class="block px-4 py-3 hover:bg-gray-50 transition">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                {% if c.fijado %}<span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded">📌</span>{% endif %}
+                {% if c.urgente %}<span class="text-xs px-2 py-0.5 bg-red-100 text-red-800 rounded">🚨 Urgente</span>{% endif %}
+                <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">{{ c.get_tipo_display }}</span>
+                {% if not c.activo %}<span class="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded">Inactivo</span>{% endif %}
+              </div>
+              <div class="font-medium text-gray-900 truncate">{{ c.titulo }}</div>
+              <div class="text-xs text-gray-500 mt-1 flex items-center gap-3 flex-wrap">
+                <span>📅 {{ c.fecha_publicacion|date:"d M Y · H:i" }}</span>
+                <span>👁 {{ c.vistas }}</span>
+                {% if c.materia %}<span>📚 {{ c.materia }}</span>{% endif %}
+                {% if c.autor %}
+                <span class="inline-flex items-center gap-1">
+                  {% include "comunicacion/_avatar_docente.html" with docente=c.autor materia=c.materia size="xs" %}
+                  {{ c.autor.perfil_docente.get_nombre_completo|default:c.autor.username }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <span class="text-gray-400">→</span>
+          </div>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Paginacion -->
+  {% if page.paginator.num_pages > 1 %}
+  <div class="flex items-center justify-center gap-2 mt-5">
+    {% if page.has_previous %}
+    <a href="?{% if busqueda %}q={{ busqueda }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}{% if grado_id %}grado={{ grado_id }}&{% endif %}{% if estado %}estado={{ estado }}&{% endif %}page={{ page.previous_page_number }}"
+       class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">←</a>
+    {% endif %}
+    <span class="text-sm text-gray-600">Pagina {{ page.number }} de {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+    <a href="?{% if busqueda %}q={{ busqueda }}&{% endif %}{% if tipo %}tipo={{ tipo }}&{% endif %}{% if grado_id %}grado={{ grado_id }}&{% endif %}{% if estado %}estado={{ estado }}&{% endif %}page={{ page.next_page_number }}"
+       class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">→</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+    <div class="text-5xl mb-3">📭</div>
+    <p class="text-gray-700 font-medium">No hay comunicados que coincidan con los filtros.</p>
+    <a href="{% url 'staff:comunicado_crear' %}" class="inline-block mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">+ Crear el primero</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

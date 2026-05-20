@@ -1,0 +1,50 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}{{ galeria.titulo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+  <a href="{% url 'staff:galerias_lista' %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver a galerías</a>
+
+  <div class="bg-white border border-gray-200 rounded-xl mt-2 overflow-hidden">
+    <div class="p-5 sm:p-6 border-b border-gray-100">
+      <div class="flex items-center gap-2 flex-wrap mb-2">
+        <span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-medium">📷 Galería</span>
+        {% if not galeria.activa %}<span class="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded">Inactiva</span>{% endif %}
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ galeria.titulo }}</h1>
+      <div class="text-sm text-gray-500 mt-2 flex items-center gap-3 flex-wrap">
+        <span>📅 {{ galeria.fecha_evento|date:"d M Y" }}</span>
+        <span>📷 {{ galeria.fotos.count }} foto{{ galeria.fotos.count|pluralize:"s" }}</span>
+      </div>
+      {% if galeria.descripcion %}<p class="text-sm text-gray-700 mt-3 whitespace-pre-line">{{ galeria.descripcion }}</p>{% endif %}
+    </div>
+
+    {% if galeria.fotos.all %}
+    <div class="p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      {% for f in galeria.fotos.all %}
+      <a href="{{ f.imagen.url }}" target="_blank">
+        <img src="{{ f.imagen.url }}" alt="" class="w-full h-32 sm:h-40 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition">
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-10 text-center text-gray-500 text-sm">Esta galería todavía no tiene fotos.</div>
+    {% endif %}
+
+    <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
+      <div><span class="font-medium text-gray-700">Autor:</span> {{ galeria.autor.first_name|default:galeria.autor.username }}</div>
+      <div><span class="font-medium text-gray-700">Grados:</span> {% for g in galeria.grados.all %}{{ g }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      {% if galeria.modificado_por %}<div class="sm:col-span-2"><span class="font-medium text-gray-700">Última edición:</span> {{ galeria.modificado_por.first_name|default:galeria.modificado_por.username }} · {{ galeria.fecha_modificacion|date:"d M Y · H:i" }}</div>{% endif %}
+    </div>
+
+    {% if puede_editar %}
+    <div class="px-5 sm:px-6 py-3 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
+      <a href="{% url 'staff:galeria_editar' galeria.pk %}" class="flex-1 text-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg">✏️ Editar</a>
+      <a href="{% url 'staff:galeria_eliminar' galeria.pk %}" class="flex-1 text-center px-4 py-2 bg-white border border-red-300 text-red-700 hover:bg-red-50 font-medium rounded-lg">🗑️ Eliminar</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

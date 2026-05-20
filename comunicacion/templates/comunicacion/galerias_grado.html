@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Galerías · {{ grado }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+
+  <div class="flex items-center justify-between mb-5">
+    <a href="{% url 'comunicacion:muro_grado' grado.slug %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver al muro del aula</a>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+    <h1 class="text-2xl font-bold text-gray-900">📸 Galerías de {{ grado }}</h1>
+    <p class="text-sm text-gray-500 mt-1">Fotos de eventos, salidas y momentos especiales del aula.</p>
+  </div>
+
+  {% if galerias %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for galeria in galerias %}
+    <a href="{% url 'comunicacion:galeria_detalle_publica' galeria.pk %}"
+       class="group block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-indigo-300 transition">
+      {% with primera=galeria.fotos.first %}
+      {% if primera %}
+      <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+        <img src="{{ primera.imagen.url }}" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+      </div>
+      {% else %}
+      <div class="aspect-[4/3] bg-gray-100 flex items-center justify-center text-5xl text-gray-300">📷</div>
+      {% endif %}
+      {% endwith %}
+      <div class="p-4">
+        <h2 class="font-semibold text-gray-900 group-hover:text-indigo-700 line-clamp-1">{{ galeria.titulo }}</h2>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-xs text-gray-500">{{ galeria.fecha_evento|date:"d M Y" }}</span>
+          <span class="text-xs text-gray-400">📷 {{ galeria.fotos.count }} foto{{ galeria.fotos.count|pluralize:"s" }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+    <div class="text-5xl mb-3">📷</div>
+    <p class="text-gray-700 font-medium">Todavía no hay galerías para este grado.</p>
+    <p class="text-sm text-gray-500 mt-1">Volvé pronto o consultá con la dirección del aula.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Galerías{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">🖼️ Galerías</h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ page.paginator.count }} galería{{ page.paginator.count|pluralize:"s" }} en total</p>
+    </div>
+    <a href="{% url 'staff:galeria_crear' %}"
+       class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">
+      <span>+</span> Nueva galería
+    </a>
+  </div>
+
+  <form method="get" class="bg-white border border-gray-200 rounded-xl p-3 mb-4 flex gap-2">
+    <input type="text" name="q" value="{{ busqueda }}" placeholder="🔍 Buscar..."
+           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+    <button type="submit" class="px-4 py-2 bg-gray-900 hover:bg-gray-700 text-white text-sm font-medium rounded-lg">Filtrar</button>
+  </form>
+
+  {% if page.object_list %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for g in page.object_list %}
+    <a href="{% url 'staff:galeria_detalle' g.pk %}"
+       class="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition">
+      <div class="aspect-video bg-gray-100 relative">
+        {% with primera=g.fotos.first %}
+        {% if primera %}
+        <img src="{{ primera.imagen.url }}" alt="" class="w-full h-full object-cover group-hover:scale-105 transition">
+        {% else %}
+        <div class="w-full h-full flex items-center justify-center text-gray-300 text-5xl">🖼️</div>
+        {% endif %}
+        {% endwith %}
+        {% if not g.activa %}
+        <span class="absolute top-2 left-2 text-xs px-2 py-0.5 bg-gray-700 text-white rounded">Inactiva</span>
+        {% endif %}
+        <span class="absolute bottom-2 right-2 text-xs px-2 py-0.5 bg-black/60 text-white rounded">{{ g.fotos.count }} fotos</span>
+      </div>
+      <div class="p-3">
+        <div class="font-medium text-gray-900 truncate">{{ g.titulo }}</div>
+        <div class="text-xs text-gray-500 mt-1">📅 {{ g.fecha_evento|date:"d M Y" }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if page.paginator.num_pages > 1 %}
+  <div class="flex items-center justify-center gap-2 mt-5">
+    {% if page.has_previous %}<a href="?{% if busqueda %}q={{ busqueda }}&{% endif %}page={{ page.previous_page_number }}" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">←</a>{% endif %}
+    <span class="text-sm text-gray-600">Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a href="?{% if busqueda %}q={{ busqueda }}&{% endif %}page={{ page.next_page_number }}" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">→</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+    <div class="text-5xl mb-3">📷</div>
+    <p class="text-gray-700 font-medium">Aún no hay galerías.</p>
+    <a href="{% url 'staff:galeria_crear' %}" class="inline-block mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">+ Crear la primera</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
