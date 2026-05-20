@@ -1,0 +1,59 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Miembros del grupo{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto">
+
+  <div class="mb-4">
+    <a href="{% url 'staff:mensaje_conversacion' conversacion.pk %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver a la conversación</a>
+  </div>
+
+  <h1 class="text-2xl font-bold text-gray-900 mb-1">Miembros del grupo</h1>
+  <p class="text-sm text-gray-500 mb-5">{{ conversacion.nombre }}</p>
+
+  <!-- Miembros actuales -->
+  <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+    <h2 class="font-semibold text-gray-900 mb-3">En el grupo</h2>
+    <div class="space-y-2">
+      {% for m in miembros_actuales %}
+      <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+        <span class="text-sm text-gray-800">
+          {{ m.usuario.get_full_name|default:m.usuario.username }}
+          {% if m.usuario_id == conversacion.creador_id %}
+          <span class="text-xs text-purple-600">(creador)</span>
+          {% endif %}
+        </span>
+        {% if m.usuario_id != conversacion.creador_id %}
+        <form method="post" class="inline" onsubmit="return confirm('¿Sacar a esta persona del grupo?');">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="sacar">
+          <input type="hidden" name="usuario" value="{{ m.usuario_id }}">
+          <button type="submit" class="text-xs text-red-600 hover:text-red-800 underline">Sacar</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Agregar miembros -->
+  {% if disponibles %}
+  <div class="bg-white border border-gray-200 rounded-xl p-5">
+    <h2 class="font-semibold text-gray-900 mb-3">Agregar al grupo</h2>
+    <div class="space-y-2">
+      {% for u in disponibles %}
+      <div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+        <span class="text-sm text-gray-800">{{ u.get_full_name|default:u.username }}</span>
+        <form method="post" class="inline">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="agregar">
+          <input type="hidden" name="usuario" value="{{ u.pk }}">
+          <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800 underline">Agregar</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

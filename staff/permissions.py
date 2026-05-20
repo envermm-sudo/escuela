@@ -356,3 +356,45 @@ def permiso_materias_grados_required(view_func):
         puede_administrar_materias_grados,
         'No tenés permiso para administrar materias y grados.'
     )(view_func)
+
+
+# ================================================================
+# Mensajería interna: con quién puede hablar cada rol
+# ================================================================
+def roles_contactables(user):
+    """
+    Devuelve la lista de roles con los que 'user' puede iniciar conversaciones.
+    - Dueño y directivos: todos.
+    - Preceptores: preceptores y docentes.
+    - Docentes: solo docentes.
+    """
+    if es_dueno(user) or es_directivo(user):
+        return ['directivo', 'preceptor', 'docente']
+    if es_preceptor(user):
+        return ['preceptor', 'docente']
+    if es_docente(user):
+        return ['docente']
+    return []
+
+
+def staff_contactable_qs(user):
+    """
+    Queryset de Users del staff con los que 'user' puede iniciar conversaciones.
+    Excluye al propio usuario. Aplica las reglas de roles_contactables.
+    El dueño puede contactar a cualquier staff (incluido otros superusers).
+    """
+    from django.contrib.auth.models import User
+    from comunicacion.models import PerfilDocente
+
+    roles = roles_contactables(user)
+    qs = User.objects.filter(is_staff=True, is_active=True).exclude(pk=user.pk)
+
+    if es_dueno(user):
+        # El dueño contacta a cualquiera
+        return qs.order_by('first_name', 'last_name')
+
+    # Resto: filtrar por roles permitidos vía PerfilDocente
+    ids_permitidos = PerfilDocente.objects.filter(
+        rol__in=roles
+    ).values_list('user_id', flat=True)
+    return qs.filter(pk__in=ids_permitidos).order_by('first_name', 'last_name')

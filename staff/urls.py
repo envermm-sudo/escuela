@@ -41,7 +41,9 @@ urlpatterns = [
 
     # Mensajería interna
     path('mensajes/', views.mensajes_lista, name='mensajes_lista'),
+    path('mensajes/nuevo/', views.mensaje_nuevo, name='mensaje_nuevo'),
     path('mensajes/<int:pk>/', views.mensaje_conversacion, name='mensaje_conversacion'),
+    path('mensajes/<int:pk>/miembros/', views.mensaje_gestionar_miembros, name='mensaje_gestionar_miembros'),
 
     # Gestión (director/superuser)
     path('gestion/', views.gestion_dashboard, name='gestion_dashboard'),

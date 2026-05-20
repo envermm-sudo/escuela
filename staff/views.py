@@ -1590,3 +1590,125 @@ def mensaje_conversacion(request, pk):
         'es_grupo': conversacion.tipo == 'grupo',
         'soy_creador': conversacion.creador_id == request.user.id,
     })
+
+
+@staff_required
+def mensaje_nuevo(request):
+    """Crear una conversación nueva: directa (1 a 1) o grupo."""
+    from django.contrib.auth.models import User
+    from comunicacion.models import Conversacion, MiembroConversacion
+    from .permissions import staff_contactable_qs
+
+    contactables = staff_contactable_qs(request.user)
+
+    if request.method == 'POST':
+        tipo = request.POST.get('tipo', 'directa')
+
+        if tipo == 'directa':
+            otro_id = request.POST.get('usuario', '')
+            otro = contactables.filter(pk=otro_id).first()
+            if otro is None:
+                messages.error(request, 'Elegí una persona válida para conversar.')
+                return redirect('staff:mensaje_nuevo')
+
+            # ¿Ya existe una conversación directa entre estos dos?
+            existente = (
+                Conversacion.objects
+                .filter(tipo='directa', miembros__usuario=request.user)
+                .filter(miembros__usuario=otro)
+                .first()
+            )
+            if existente:
+                return redirect('staff:mensaje_conversacion', pk=existente.pk)
+
+            conv = Conversacion.objects.create(tipo='directa', creador=request.user)
+            MiembroConversacion.objects.create(conversacion=conv, usuario=request.user)
+            MiembroConversacion.objects.create(conversacion=conv, usuario=otro)
+            return redirect('staff:mensaje_conversacion', pk=conv.pk)
+
+        elif tipo == 'grupo':
+            nombre = request.POST.get('nombre', '').strip()[:120]
+            miembros_ids = request.POST.getlist('miembros')
+            if not nombre:
+                messages.error(request, 'Poné un nombre al grupo.')
+                return redirect('staff:mensaje_nuevo')
+            if not miembros_ids:
+                messages.error(request, 'Elegí al menos un miembro para el grupo.')
+                return redirect('staff:mensaje_nuevo')
+
+            # Filtrar solo los miembros válidos según permisos
+            miembros_validos = list(contactables.filter(pk__in=miembros_ids))
+
+            conv = Conversacion.objects.create(
+                tipo='grupo',
+                nombre=nombre,
+                creador=request.user,
+            )
+            # El creador siempre es miembro
+            MiembroConversacion.objects.create(conversacion=conv, usuario=request.user)
+            for u in miembros_validos:
+                MiembroConversacion.objects.get_or_create(conversacion=conv, usuario=u)
+            messages.success(request, f'Grupo "{nombre}" creado.')
+            return redirect('staff:mensaje_conversacion', pk=conv.pk)
+
+    return render(request, 'staff/mensaje_nuevo.html', {
+        'contactables': contactables,
+    })
+
+
+@staff_required
+def mensaje_gestionar_miembros(request, pk):
+    """El creador del grupo agrega o saca miembros."""
+    from comunicacion.models import Conversacion, MiembroConversacion
+    from .permissions import staff_contactable_qs
+
+    conversacion = get_object_or_404(Conversacion, pk=pk, tipo='grupo')
+
+    # Solo el creador gestiona miembros
+    if conversacion.creador_id != request.user.id:
+        messages.error(request, 'Solo quien creó el grupo puede gestionar los miembros.')
+        return redirect('staff:mensaje_conversacion', pk=pk)
+
+    contactables = staff_contactable_qs(request.user)
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', '')
+
+        if accion == 'agregar':
+            nuevo_id = request.POST.get('usuario', '')
+            nuevo = contactables.filter(pk=nuevo_id).first()
+            if nuevo:
+                miembro, creado = MiembroConversacion.objects.get_or_create(
+                    conversacion=conversacion,
+                    usuario=nuevo,
+                )
+                if not creado and not miembro.activo:
+                    miembro.activo = True
+                    miembro.save(update_fields=['activo'])
+                messages.success(request, 'Miembro agregado al grupo.')
+            return redirect('staff:mensaje_gestionar_miembros', pk=pk)
+
+        elif accion == 'sacar':
+            sacar_id = request.POST.get('usuario', '')
+            # No puede sacarse a sí mismo por acá (para eso está "salir del grupo")
+            if str(sacar_id) != str(request.user.id):
+                MiembroConversacion.objects.filter(
+                    conversacion=conversacion,
+                    usuario_id=sacar_id,
+                ).update(activo=False)
+                messages.success(request, 'Miembro sacado del grupo.')
+            return redirect('staff:mensaje_gestionar_miembros', pk=pk)
+
+    miembros_actuales = (
+        conversacion.miembros
+        .filter(activo=True)
+        .select_related('usuario')
+    )
+    ids_actuales = set(miembros_actuales.values_list('usuario_id', flat=True))
+    disponibles = contactables.exclude(pk__in=ids_actuales)
+
+    return render(request, 'staff/mensaje_miembros.html', {
+        'conversacion': conversacion,
+        'miembros_actuales': miembros_actuales,
+        'disponibles': disponibles,
+    })

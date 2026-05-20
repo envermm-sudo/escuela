@@ -1,0 +1,107 @@
+{% extends "staff/base_staff.html" %}
+{% block titulo %}Nueva conversación{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto">
+
+  <div class="mb-4">
+    <a href="{% url 'staff:mensajes_lista' %}" class="text-sm text-gray-500 hover:text-gray-700">← Volver a mensajes</a>
+  </div>
+
+  <h1 class="text-2xl font-bold text-gray-900 mb-5">Nueva conversación</h1>
+
+  <!-- Selector de tipo -->
+  <div class="flex gap-2 mb-5">
+    <button type="button" id="btn-directa"
+            class="flex-1 px-4 py-2 rounded-lg text-sm font-semibold border-2 border-indigo-600 bg-indigo-600 text-white">
+      Conversación directa
+    </button>
+    <button type="button" id="btn-grupo"
+            class="flex-1 px-4 py-2 rounded-lg text-sm font-semibold border-2 border-gray-300 bg-white text-gray-700">
+      Grupo
+    </button>
+  </div>
+
+  {% if contactables %}
+
+  <!-- FORM DIRECTA -->
+  <form method="post" id="form-directa" class="bg-white border border-gray-200 rounded-xl p-5">
+    {% csrf_token %}
+    <input type="hidden" name="tipo" value="directa">
+    <label class="block text-sm font-medium text-gray-700 mb-1">¿Con quién querés hablar?</label>
+    <select name="usuario" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+      <option value="">— Elegir persona —</option>
+      {% for u in contactables %}
+      <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
+      {% endfor %}
+    </select>
+    <div class="flex justify-end mt-4">
+      <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+        Iniciar conversación
+      </button>
+    </div>
+  </form>
+
+  <!-- FORM GRUPO -->
+  <form method="post" id="form-grupo" class="bg-white border border-gray-200 rounded-xl p-5" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="tipo" value="grupo">
+    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del grupo</label>
+    <input type="text" name="nombre" maxlength="120"
+           placeholder="Ej: Coordinación turno mañana"
+           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 mb-4">
+
+    <label class="block text-sm font-medium text-gray-700 mb-1">Miembros</label>
+    <p class="text-xs text-gray-500 mb-2">Marcá las personas que querés agregar al grupo.</p>
+    <div class="space-y-1 max-h-64 overflow-y-auto border border-gray-100 rounded-lg p-2">
+      {% for u in contactables %}
+      <label class="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer">
+        <input type="checkbox" name="miembros" value="{{ u.pk }}">
+        <span class="text-sm text-gray-800">{{ u.get_full_name|default:u.username }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="flex justify-end mt-4">
+      <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
+        Crear grupo
+      </button>
+    </div>
+  </form>
+
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-8 text-center">
+    <p class="text-gray-500">No hay personas disponibles para conversar.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+(function() {
+  var btnDirecta = document.getElementById('btn-directa');
+  var btnGrupo = document.getElementById('btn-grupo');
+  var formDirecta = document.getElementById('form-directa');
+  var formGrupo = document.getElementById('form-grupo');
+  if (!btnDirecta || !btnGrupo) return;
+
+  var activo = 'border-indigo-600 bg-indigo-600 text-white';
+  var inactivo = 'border-gray-300 bg-white text-gray-700';
+
+  function mostrar(tipo) {
+    if (tipo === 'directa') {
+      formDirecta.style.display = '';
+      formGrupo.style.display = 'none';
+      btnDirecta.className = 'flex-1 px-4 py-2 rounded-lg text-sm font-semibold border-2 ' + activo;
+      btnGrupo.className = 'flex-1 px-4 py-2 rounded-lg text-sm font-semibold border-2 ' + inactivo;
+    } else {
+      formDirecta.style.display = 'none';
+      formGrupo.style.display = '';
+      btnGrupo.className = 'flex-1 px-4 py-2 rounded-lg text-sm font-semibold border-2 ' + activo;
+      btnDirecta.className = 'flex-1 px-4 py-2 rounded-lg text-sm font-semibold border-2 ' + inactivo;
+    }
+  }
+  btnDirecta.addEventListener('click', function() { mostrar('directa'); });
+  btnGrupo.addEventListener('click', function() { mostrar('grupo'); });
+})();
+</script>
+{% endblock %}

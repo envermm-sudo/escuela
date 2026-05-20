@@ -17,9 +17,15 @@
   <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
     <!-- Encabezado -->
     <div class="px-5 py-3 border-b border-gray-100 bg-gray-50">
-      <p class="font-semibold text-gray-900">{{ nombre_conv }}</p>
+      <div class="flex items-center justify-between gap-2">
+        <p class="font-semibold text-gray-900">{{ nombre_conv }}</p>
+        {% if es_grupo and soy_creador %}
+        <a href="{% url 'staff:mensaje_gestionar_miembros' conversacion.pk %}"
+           class="text-xs text-indigo-600 hover:text-indigo-800 underline shrink-0">Gestionar miembros</a>
+        {% endif %}
+      </div>
       {% if es_grupo %}
-      <p class="text-xs text-gray-500">
+      <p class="text-xs text-gray-500 mt-0.5">
         {{ miembros|length }} miembro{{ miembros|length|pluralize:"s" }}:
         {% for m in miembros %}{{ m.usuario.get_full_name|default:m.usuario.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
       </p>
