@@ -65,19 +65,59 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
   <a href="{% url 'staff:dashboard' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
     <span class="text-lg">🏠</span><span>Inicio</span>
   </a>
+  <a href="{% url 'staff:consultas_lista' %}" class="relative flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+    <span class="text-lg">💬</span><span>Consultas</span>
+    {% if consultas_pendientes_count %}
+    <span class="absolute top-1 right-1/4 bg-amber-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{{ consultas_pendientes_count }}</span>
+    {% endif %}
+  </a>
+  <a href="{% url 'staff:mensajes_lista' %}" class="relative flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+    <span class="text-lg">✉️</span><span>Mensajes</span>
+    {% if mensajes_no_leidos_count %}
+    <span class="absolute top-1 right-1/4 bg-indigo-600 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{{ mensajes_no_leidos_count }}</span>
+    {% endif %}
+  </a>
   <a href="{% url 'staff:comunicados_lista' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
     <span class="text-lg">📢</span><span>Avisos</span>
   </a>
-  <a href="{% url 'staff:galerias_lista' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
-    <span class="text-lg">🖼️</span><span>Fotos</span>
-  </a>
-  <a href="{% url 'staff:personal_lista' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
-    <span class="text-lg">👥</span><span>Personal</span>
-  </a>
-  <a href="{% url 'staff:mi_perfil' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
-    <span class="text-lg">⚙️</span><span>Perfil</span>
-  </a>
+  <button type="button" id="btn-mas-movil" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+    <span class="text-lg">☰</span><span>Más</span>
+  </button>
 </nav>
+
+<!-- ============== PANEL "MÁS" (mobile) ============== -->
+<div id="overlay-mas" class="md:hidden fixed inset-0 bg-black/40 z-40 hidden"></div>
+<div id="panel-mas" class="md:hidden fixed bottom-0 inset-x-0 bg-white rounded-t-2xl z-50 transform translate-y-full transition-transform duration-200 max-h-[80vh] overflow-y-auto">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+    <span class="font-semibold text-gray-900">Menú</span>
+    <button type="button" id="btn-cerrar-mas" class="text-gray-400 hover:text-gray-700 text-xl">✕</button>
+  </div>
+  <nav class="p-3 flex flex-col gap-1 text-sm pb-6">
+    {% include 'staff/_nav_items.html' %}
+  </nav>
+</div>
+
+<script>
+(function() {
+  var btnAbrir = document.getElementById('btn-mas-movil');
+  var btnCerrar = document.getElementById('btn-cerrar-mas');
+  var panel = document.getElementById('panel-mas');
+  var overlay = document.getElementById('overlay-mas');
+  if (!btnAbrir || !panel || !overlay) return;
+
+  function abrir() {
+    overlay.classList.remove('hidden');
+    panel.classList.remove('translate-y-full');
+  }
+  function cerrar() {
+    panel.classList.add('translate-y-full');
+    overlay.classList.add('hidden');
+  }
+  btnAbrir.addEventListener('click', abrir);
+  if (btnCerrar) btnCerrar.addEventListener('click', cerrar);
+  overlay.addEventListener('click', cerrar);
+})();
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
