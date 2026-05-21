@@ -497,6 +497,16 @@ class ConsultaComunicado(models.Model):
         default=False,
         help_text='Se archiva junto con el comunicado. El padre ya no puede escribir.',
     )
+    padre_leyo = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Última vez que el padre abrió este hilo. Para saber si leyó las respuestas.',
+    )
+    docente_leyo = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Última vez que el docente abrió este hilo.',
+    )
     creada = models.DateTimeField(auto_now_add=True)
     actualizada = models.DateTimeField(auto_now=True)
 
@@ -639,3 +649,4 @@ class MensajeInterno(models.Model):
 
     def __str__(self):
         return f'{self.autor.get_full_name() or self.autor.username} — {self.creado:%d/%m/%Y %H:%M}'
+
