@@ -25,6 +25,35 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     <div class="flex items-center gap-3">
       <span class="text-sm text-gray-600 hidden sm:inline">Hola, {{ request.user.first_name|default:request.user.username }}</span>
       <a href="/" class="text-sm text-indigo-600 hover:text-indigo-800 hidden sm:inline">Ver portal publico</a>
+      <!-- Campanita de notificaciones -->
+      <div class="relative">
+        <button type="button" id="btn-campana" class="relative p-1.5 rounded-lg hover:bg-gray-100 transition">
+          <span class="text-xl">🔔</span>
+          <span id="campana-badge" class="hidden absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1"></span>
+  </button>
+        <div id="campana-panel" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-[70vh] overflow-y-auto">
+          <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <span class="font-semibold text-gray-900 text-sm">Notificaciones</span>
+            <button type="button" id="btn-cerrar-campana" class="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+  </div>
+          <div class="px-4 py-2 bg-amber-50 border-b border-amber-100">
+            <span class="text-xs font-semibold text-amber-800 uppercase tracking-wide">💬 Consultas de familias</span>
+</div>
+          <div id="campana-consultas" class="divide-y divide-gray-50">
+            <p class="px-4 py-3 text-xs text-gray-400 italic">Sin consultas nuevas.</p>
+          </div>
+          <div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100">
+            <span class="text-xs font-semibold text-indigo-800 uppercase tracking-wide">✉️ Mensajes internos</span>
+          </div>
+          <div id="campana-mensajes" class="divide-y divide-gray-50">
+            <p class="px-4 py-3 text-xs text-gray-400 italic">Sin mensajes nuevos.</p>
+          </div>
+          <div class="px-4 py-3 border-t border-gray-100 flex gap-3">
+            <a href="{% url 'staff:consultas_lista' %}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Ver consultas</a>
+            <a href="{% url 'staff:mensajes_lista' %}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Ver mensajes</a>
+          </div>
+        </div>
+      </div>
       <a href="{% url 'staff:logout' %}" class="text-sm text-gray-500 hover:text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50 transition">Salir</a>
     </div>
   </div>
@@ -118,6 +147,71 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
   overlay.addEventListener('click', cerrar);
 })();
 </script>
+<script>
+(function() {
+var btn = document.getElementById('btn-campana');
+var panel = document.getElementById('campana-panel');
+var btnCerrar = document.getElementById('btn-cerrar-campana');
+var badge = document.getElementById('campana-badge');
+var contConsultas = document.getElementById('campana-consultas');
+var contMensajes = document.getElementById('campana-mensajes');
+if (!btn || !panel) return;
+var urlJson = "{% url 'staff:notificaciones_json' %}";
+function cerrar() { panel.classList.add('hidden'); }
+btn.addEventListener('click', function(e) {
+e.stopPropagation();
+panel.classList.toggle('hidden');
+});
+if (btnCerrar) btnCerrar.addEventListener('click', cerrar);
+document.addEventListener('click', function(e) {
+if (!panel.contains(e.target) && !btn.contains(e.target)) cerrar();
+});
+function itemHTML(url, titulo, detalle, hora) {
+var a = document.createElement('a');
+a.href = url;
+a.className = 'block px-4 py-2.5 hover:bg-gray-50';
+a.innerHTML =
+'<p class="text-sm font-medium text-gray-900">' + titulo + '</p>' +
+'<p class="text-xs text-gray-500 truncate">' + detalle + '</p>' +
+'<p class="text-[10px] text-gray-400 mt-0.5">' + hora + '</p>';
+return a;
+}
+function refrescar() {
+fetch(urlJson, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+.then(function(r) { return r.ok ? r.json() : null; })
+.then(function(data) {
+if (!data) return;
+if (data.total > 0) {
+badge.textContent = data.total > 99 ? '99+' : data.total;
+badge.classList.remove('hidden');
+} else {
+badge.classList.add('hidden');
+}
+contConsultas.innerHTML = '';
+if (data.consultas && data.consultas.length) {
+data.consultas.forEach(function(c) {
+contConsultas.appendChild(itemHTML(c.url, c.padre, 'Sobre: ' + c.comunicado, c.hora));
+});
+} else {
+contConsultas.innerHTML = '<p class="px-4 py-3 text-xs text-gray-400 italic">Sin consultas nuevas.</p>';
+}
+contMensajes.innerHTML = '';
+if (data.mensajes && data.mensajes.length) {
+data.mensajes.forEach(function(m) {
+var detalle = m.cantidad + ' mensaje' + (m.cantidad > 1 ? 's' : '') + ' nuevo' + (m.cantidad > 1 ? 's' : '');
+contMensajes.appendChild(itemHTML(m.url, m.titulo, detalle, m.hora));
+});
+} else {
+contMensajes.innerHTML = '<p class="px-4 py-3 text-xs text-gray-400 italic">Sin mensajes nuevos.</p>';
+}
+})
+.catch(function() { /* silencioso */ });
+}
+refrescar();
+setInterval(refrescar, 20000);
+})();
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
+
