@@ -45,6 +45,8 @@ urlpatterns = [
     path('mensajes/<int:pk>/', views.mensaje_conversacion, name='mensaje_conversacion'),
     path('mensajes/<int:pk>/miembros/', views.mensaje_gestionar_miembros, name='mensaje_gestionar_miembros'),
     path('mensajes/<int:pk>/json/', views.mensaje_conversacion_json, name='mensaje_conversacion_json'),
+    # Campanita de notificaciones
+    path('notificaciones/json/', views.notificaciones_json, name='notificaciones_json'),
 
     # Gestión (director/superuser)
     path('gestion/', views.gestion_dashboard, name='gestion_dashboard'),

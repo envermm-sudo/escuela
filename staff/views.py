@@ -1763,3 +1763,67 @@ def mensaje_conversacion_json(request, pk):
     membresia.save(update_fields=['ultima_lectura'])
 
     return JsonResponse({'mensajes': data, 'es_grupo': es_grupo})
+
+
+@staff_required
+def notificaciones_json(request):
+    """
+    Endpoint JSON para la campanita de notificaciones.
+    Devuelve dos listas separadas: consultas pendientes y mensajes internos
+    no leídos. Lee datos ya existentes, no usa una tabla aparte.
+    """
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from comunicacion.models import ConsultaComunicado, MiembroConversacion
+
+    # --- Consultas de familias pendientes ---
+    consultas_qs = ConsultaComunicado.objects.filter(
+        estado='pendiente'
+    ).select_related('comunicado', 'padre').order_by('-actualizada')
+    if not request.user.is_superuser:
+        consultas_qs = consultas_qs.filter(comunicado__autor=request.user)
+
+    consultas = []
+    for c in consultas_qs[:15]:
+        consultas.append({
+            'id': c.id,
+            'padre': c.padre.get_full_name() or c.padre.username,
+            'comunicado': c.comunicado.titulo,
+            'hora': timezone.localtime(c.actualizada).strftime('%d/%m %H:%M'),
+            'url': f'/staff/consultas/{c.id}/',
+        })
+
+    # --- Mensajes internos no leídos ---
+    mensajes = []
+    membresias = (
+        MiembroConversacion.objects
+        .filter(usuario=request.user, activo=True)
+        .select_related('conversacion')
+    )
+    for m in membresias:
+        conv = m.conversacion
+        nuevos_qs = conv.mensajes.exclude(autor=request.user)
+        if m.ultima_lectura:
+            nuevos_qs = nuevos_qs.filter(creado__gt=m.ultima_lectura)
+        cant = nuevos_qs.count()
+        if cant > 0:
+            ultimo = nuevos_qs.select_related('autor').order_by('-creado').first()
+            if conv.tipo == 'grupo':
+                titulo = conv.nombre or 'Grupo'
+            else:
+                titulo = ultimo.autor.get_full_name() or ultimo.autor.username
+            mensajes.append({
+                'conv_id': conv.id,
+                'titulo': titulo,
+                'cantidad': cant,
+                'hora': timezone.localtime(ultimo.creado).strftime('%d/%m %H:%M'),
+                'url': f'/staff/mensajes/{conv.id}/',
+            })
+
+    total = len(consultas) + sum(x['cantidad'] for x in mensajes)
+
+    return JsonResponse({
+        'total': total,
+        'consultas': consultas,
+        'mensajes': mensajes,
+    })
