@@ -1470,9 +1470,24 @@ def consulta_detalle(request, pk):
     consulta.docente_leyo = timezone.now()
     consulta.save(update_fields=['docente_leyo'])
 
+    # Hijos del padre en los grados de este comunicado (para que el docente
+    # sepa de qué alumno se trata). Solo los que tienen nombre cargado.
+    hijos_del_padre = []
+    perfil_padre = getattr(consulta.padre, 'perfil_padre', None)
+    if perfil_padre is not None:
+        grados_ids = list(consulta.comunicado.grados.values_list('id', flat=True))
+        if grados_ids:
+            hijos_del_padre = list(
+                perfil_padre.hijos
+                .filter(grado_id__in=grados_ids)
+                .exclude(nombre='')
+                .select_related('grado')
+            )
+
     return render(request, 'staff/consulta_detalle.html', {
         'consulta': consulta,
         'mensajes_hilo': mensajes_hilo,
+        'hijos_del_padre': hijos_del_padre,
     })
 
 
