@@ -12,10 +12,18 @@ def staff_context(request):
     if request.user.is_staff and request.path.startswith('/staff/'):
         try:
             from comunicacion.models import ConsultaComunicado
-            qs = ConsultaComunicado.objects.filter(estado='pendiente')
+            qs = ConsultaComunicado.objects.all()
             if not request.user.is_superuser:
                 qs = qs.filter(comunicado__autor=request.user)
-            consultas_pendientes_count = qs.count()
+            total_consultas = 0
+            for c in qs:
+                ultimo_padre = c.mensajes.filter(es_del_docente=False).order_by('-creado').first()
+                if ultimo_padre is None:
+                    continue
+                if c.docente_leyo is not None and ultimo_padre.creado <= c.docente_leyo:
+                    continue
+                total_consultas += 1
+            consultas_pendientes_count = total_consultas
         except Exception:
             consultas_pendientes_count = 0
 

@@ -1781,22 +1781,30 @@ def notificaciones_json(request):
     from django.utils import timezone
     from comunicacion.models import ConsultaComunicado, MiembroConversacion
 
-    # --- Consultas de familias pendientes ---
-    consultas_qs = ConsultaComunicado.objects.filter(
-        estado='pendiente'
-    ).select_related('comunicado', 'padre').order_by('-actualizada')
+    # --- Consultas con mensajes nuevos del padre sin leer por el docente ---
+    consultas_qs = ConsultaComunicado.objects.select_related(
+        'comunicado', 'padre'
+    ).order_by('-actualizada')
     if not request.user.is_superuser:
         consultas_qs = consultas_qs.filter(comunicado__autor=request.user)
 
     consultas = []
-    for c in consultas_qs[:15]:
+    for c in consultas_qs:
+        ultimo_padre = c.mensajes.filter(es_del_docente=False).order_by('-creado').first()
+        if ultimo_padre is None:
+            continue
+        # Solo cuenta si el docente no abrió el hilo después de ese mensaje
+        if c.docente_leyo is not None and ultimo_padre.creado <= c.docente_leyo:
+            continue
         consultas.append({
             'id': c.id,
             'padre': c.padre.get_full_name() or c.padre.username,
             'comunicado': c.comunicado.titulo,
-            'hora': timezone.localtime(c.actualizada).strftime('%d/%m %H:%M'),
+            'hora': timezone.localtime(ultimo_padre.creado).strftime('%d/%m %H:%M'),
             'url': f'/staff/consultas/{c.id}/',
         })
+        if len(consultas) >= 15:
+            break
 
     # --- Mensajes internos no leídos ---
     mensajes = []
