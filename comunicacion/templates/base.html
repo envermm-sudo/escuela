@@ -137,8 +137,9 @@
                                             </div>
                                         </div>
 
-                                        <a href="{% url 'comunicacion:mi_cuenta' %}" class="ml-3 text-sm text-slate-600 hover:text-slate-900 underline underline-offset-2">Mi cuenta</a>
-                                        
+                                        <a href="{% url 'comunicacion:mis_hijos' %}" class="ml-3 text-sm text-slate-600 hover:text-slate-900 hidden sm:inline">Mis hijos</a>
+                                        <a href="{% url 'comunicacion:mis_consultas' %}" class="ml-3 text-sm text-slate-600 hover:text-slate-900 hidden sm:inline">Mis consultas</a>
+                                        <a href="{% url 'comunicacion:mi_cuenta' %}" class="ml-3 text-sm text-slate-600 hover:text-slate-900 hidden sm:inline">Mi cuenta</a>
                                         <a href="{% url 'comunicacion:logout' %}" class="ml-3 text-sm text-gray-500 hover:text-gray-700">Salir</a>
                                 {% endif %}
             </div>
@@ -273,6 +274,23 @@
           }
         })();
         </script>
-        {% block extra_js %}{% endblock %}
-</body>
-</html>
+                {% block extra_js %}{% endblock %}
+        {% if request.user.is_authenticated and not request.user.is_staff %}
+        <!-- Barra inferior del padre (solo celular) -->
+        <nav class="sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 grid grid-cols-4 z-40">
+            <a href="{% url 'comunicacion:landing' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+                <span class="text-lg">🏠</span><span>Inicio</span>
+            </a>
+            <a href="{% url 'comunicacion:mis_hijos' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+                <span class="text-lg">🎒</span><span>Mis hijos</span>
+            </a>
+            <a href="{% url 'comunicacion:mis_consultas' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+                <span class="text-lg">💬</span><span>Consultas</span>
+            </a>
+            <a href="{% url 'comunicacion:mi_cuenta' %}" class="flex flex-col items-center py-2 text-xs text-gray-600 hover:text-indigo-600">
+                <span class="text-lg">⚙️</span><span>Mi cuenta</span>
+            </a>
+        </nav>
+        {% endif %}
+    </body>
+    </html>
