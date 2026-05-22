@@ -471,6 +471,29 @@ def mi_cuenta_padre_view(request):
 
 
 @login_required(login_url='comunicacion:login_padre')
+def mis_consultas_view(request):
+    """Página propia con todas las consultas que hizo el padre."""
+    from .models import ConsultaComunicado
+
+    try:
+        perfil = request.user.perfil_padre
+    except PerfilPadre.DoesNotExist:
+        messages.error(request, 'Esta sección es solo para padres registrados.')
+        return redirect('comunicacion:landing')
+
+    consultas = (
+        ConsultaComunicado.objects
+        .filter(padre=request.user)
+        .select_related('comunicado')
+        .order_by('-actualizada')
+    )
+
+    return render(request, 'comunicacion/mis_consultas.html', {
+        'consultas_padre': consultas,
+    })
+
+
+@login_required(login_url='comunicacion:login_padre')
 def hijo_crear_view(request):
     """Alta de un hijo del padre logueado."""
     try:
