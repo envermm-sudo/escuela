@@ -509,10 +509,20 @@ def hijo_crear_view(request):
         else:
             try:
                 grado = Grado.objects.get(pk=int(grado_id), activo=True)
-                HijoPadre.objects.create(padre=perfil, nombre=nombre, grado=grado)
-                nombre_msg = nombre if nombre else 'Hijo/a'
-                messages.success(request, f'{nombre_msg} agregado correctamente.')
-                return redirect('comunicacion:mi_cuenta')
+                # Si el padre ya sigue ese grado con un hijo SIN nombre,
+                # completar ese registro en vez de crear uno nuevo.
+                vacio = HijoPadre.objects.filter(
+                    padre=perfil, grado=grado, nombre=''
+                ).first()
+                if vacio is not None and nombre:
+                    vacio.nombre = nombre
+                    vacio.save(update_fields=['nombre'])
+                    messages.success(request, f'{nombre} agregado correctamente.')
+                else:
+                    HijoPadre.objects.create(padre=perfil, nombre=nombre, grado=grado)
+                    nombre_msg = nombre if nombre else 'Hijo/a'
+                    messages.success(request, f'{nombre_msg} agregado correctamente.')
+                return redirect('comunicacion:mis_hijos')
             except Grado.DoesNotExist:
                 messages.error(request, 'El grado seleccionado no existe.')
 
