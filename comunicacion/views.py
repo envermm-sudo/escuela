@@ -342,7 +342,9 @@ def _padre_tiene_acceso_a_grado(user, grado):
         perfil_padre = getattr(user, 'perfil_padre', None) or getattr(user, 'perfilpadre', None)
         if perfil_padre is None:
             return False
-        return perfil_padre.hijos_grados.filter(pk=grado.pk).exists()
+        # Usar HijoPadre como fuente de verdad
+        from .models import HijoPadre
+        return HijoPadre.objects.filter(padre=perfil_padre, grado=grado).exists()
     except Exception:
         return False
 
@@ -389,9 +391,12 @@ def galeria_detalle_publica_view(request, pk):
     if not request.user.is_staff:
         try:
             perfil_padre = getattr(request.user, 'perfil_padre', None) or getattr(request.user, 'perfilpadre', None)
-            tiene_acceso = bool(perfil_padre and perfil_padre.hijos_grados.filter(
-                pk__in=galeria.grados.values_list('pk', flat=True)
-            ).exists())
+            if perfil_padre is None:
+                tiene_acceso = False
+            else:
+                from .models import HijoPadre
+                grados_ids = galeria.grados.values_list('pk', flat=True)
+                tiene_acceso = HijoPadre.objects.filter(padre=perfil_padre, grado_id__in=grados_ids).exists()
         except Exception:
             tiene_acceso = False
 
@@ -476,13 +481,14 @@ def hijo_crear_view(request):
     if request.method == 'POST':
         nombre = request.POST.get('nombre', '').strip()[:100]
         grado_id = request.POST.get('grado', '').strip()
-        if not nombre or not grado_id.isdigit():
-            messages.error(request, 'Nombre y grado son obligatorios.')
+        if not grado_id.isdigit():
+            messages.error(request, 'Tenés que elegir un grado.')
         else:
             try:
                 grado = Grado.objects.get(pk=int(grado_id), activo=True)
                 HijoPadre.objects.create(padre=perfil, nombre=nombre, grado=grado)
-                messages.success(request, f'{nombre} agregado correctamente.')
+                nombre_msg = nombre if nombre else 'Hijo/a'
+                messages.success(request, f'{nombre_msg} agregado correctamente.')
                 return redirect('comunicacion:mi_cuenta')
             except Grado.DoesNotExist:
                 messages.error(request, 'El grado seleccionado no existe.')
@@ -507,8 +513,8 @@ def hijo_editar_view(request, pk):
     if request.method == 'POST':
         nombre = request.POST.get('nombre', '').strip()[:100]
         grado_id = request.POST.get('grado', '').strip()
-        if not nombre or not grado_id.isdigit():
-            messages.error(request, 'Nombre y grado son obligatorios.')
+        if not grado_id.isdigit():
+            messages.error(request, 'Tenés que elegir un grado.')
         else:
             try:
                 grado = Grado.objects.get(pk=int(grado_id), activo=True)

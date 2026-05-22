@@ -577,17 +577,15 @@ class ConfiguracionPortalAdmin(admin.ModelAdmin):
 @admin.register(PerfilPadre)
 class PerfilPadreAdmin(admin.ModelAdmin):
     list_display = ('user', 'dni', 'telefono', 'email_verificado', 'fecha_registro')
-    list_filter = ('email_verificado', 'notif_email', 'hijos_grados')
+    list_filter = ('email_verificado', 'notif_email')
     search_fields = ('user__username', 'user__email', 'user__first_name', 'dni')
-    filter_horizontal = ('hijos_grados',)
+    
     readonly_fields = ('fecha_registro',)
     fieldsets = (
         ('👤 Cuenta', {
             'fields': ('user', 'dni', 'telefono'),
         }),
-        ('🎓 Grados que sigue', {
-            'fields': ('hijos_grados',),
-        }),
+        
         ('🔔 Notificaciones', {
             'fields': ('notif_email', 'email_verificado'),
         }),
