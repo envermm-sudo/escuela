@@ -211,6 +211,56 @@ refrescar();
 setInterval(refrescar, 20000);
 })();
 </script>
+<script>
+(function() {
+  function activarOjos() {
+    var campos = document.querySelectorAll('input[type="password"]');
+    campos.forEach(function(campo) {
+      if (campo.dataset.ojoActivo === '1') return;
+      campo.dataset.ojoActivo = '1';
+
+      var cont = document.createElement('div');
+      cont.style.position = 'relative';
+      campo.parentNode.insertBefore(cont, campo);
+      cont.appendChild(campo);
+      campo.style.paddingRight = '2.5rem';
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Mostrar u ocultar contraseña');
+      btn.textContent = '👁';
+      btn.style.position = 'absolute';
+      btn.style.right = '0.5rem';
+      btn.style.top = '50%';
+      btn.style.transform = 'translateY(-50%)';
+      btn.style.background = 'none';
+      btn.style.border = 'none';
+      btn.style.cursor = 'pointer';
+      btn.style.fontSize = '1.1rem';
+      btn.style.opacity = '0.55';
+      btn.style.padding = '0';
+      btn.style.lineHeight = '1';
+
+      btn.addEventListener('click', function() {
+        if (campo.type === 'password') {
+          campo.type = 'text';
+          btn.style.opacity = '1';
+        } else {
+          campo.type = 'password';
+          btn.style.opacity = '0.55';
+        }
+      });
+
+      cont.appendChild(btn);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', activarOjos);
+  } else {
+    activarOjos();
+  }
+})();
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
