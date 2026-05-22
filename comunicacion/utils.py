@@ -4,6 +4,13 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 from PIL import Image
 
+# Activar soporte para imágenes HEIC/HEIF (fotos de iPhone)
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
+
 
 def convertir_a_webp(imagen_field, calidad=80, max_size=None):
     """
