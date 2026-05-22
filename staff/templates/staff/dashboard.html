@@ -74,22 +74,6 @@
     </div>
   </div>
   {% endif %}
-
-  {% if asignaciones %}
-  <div class="bg-white border border-gray-200 rounded-xl mb-6">
-    <div class="px-5 py-3 border-b border-gray-200">
-      <h2 class="font-semibold text-gray-900">🎓 Mis asignaciones</h2>
-    </div>
-    <div class="p-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-      {% for a in asignaciones %}
-      <div class="px-3 py-2 bg-gray-50 rounded-lg text-sm flex items-center justify-between">
-        <span class="text-gray-700">{{ a.grado }}</span>
-        <span class="text-indigo-700 font-medium text-xs px-2 py-0.5 bg-indigo-100 rounded">{{ a.materia }}</span>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
   {% endif %}
 
   <div class="bg-white border border-gray-200 rounded-xl">
