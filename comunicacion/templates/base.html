@@ -88,7 +88,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">
+<body class="bg-gray-50 flex flex-col min-h-screen text-gray-800 pb-20 sm:pb-0">
 
     <!-- Header sticky -->
     <header class="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-200">
@@ -161,7 +161,7 @@
     {% endif %}
 
     <!-- Contenido principal -->
-    <main class="flex-1 pb-24 sm:pb-0">
+    <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
 
