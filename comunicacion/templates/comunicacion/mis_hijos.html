@@ -7,14 +7,14 @@
 
   <div class="mb-6">
     <h1 class="text-2xl font-semibold text-slate-900">Mis hijos/as</h1>
-    <p class="text-sm text-slate-500 mt-1">Cargá a tus hijos/as y el aula que cursan. Así recibís los avisos del aula correcta.</p>
+    <p class="text-sm text-slate-500 mt-1">Estas son las aulas que seguís. Por cada hijo/a recibís los avisos del aula que le corresponde.</p>
   </div>
 
   <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-5 flex items-start gap-3">
     <span class="text-xl">💡</span>
     <p class="text-sm text-indigo-900">
-      Por cada hijo/a que agregues, vas a recibir los comunicados del aula que elijas.
-      El nombre es opcional: si querés, podés cargar solo el aula.
+      Ponerle el nombre a cada hijo/a es <strong>opcional</strong>. Sirve para que el docente
+      sepa de quién se trata cuando le escribís una consulta. Si querés, podés dejar solo el aula.
     </p>
   </div>
 
@@ -26,14 +26,14 @@
   </div>
 
   {% if hijos %}
-    <ul class="bg-white divide-y divide-slate-200 border border-slate-200 rounded-lg overflow-hidden">
+    <div class="space-y-3">
       {% for h in hijos %}
-        <li class="flex items-center justify-between px-4 py-4 hover:bg-slate-50">
+        {% if h.nombre %}
+        <!-- Hijo con nombre -->
+        <div class="bg-white border border-slate-200 rounded-lg p-4 flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <div class="text-sm font-medium text-slate-900 truncate">
-              {% if h.nombre %}{{ h.nombre }}{% else %}<span class="text-slate-400 italic">Sin nombre</span>{% endif %}
-            </div>
-            <div class="text-xs text-slate-500 mt-0.5">📚 {{ h.grado }}</div>
+            <div class="text-base font-semibold text-slate-900 truncate">{{ h.nombre }}</div>
+            <div class="text-sm text-slate-500 mt-0.5">📚 {{ h.grado }}</div>
           </div>
           <div class="flex items-center gap-3 shrink-0">
             <a href="{% url 'comunicacion:hijo_editar' h.pk %}"
@@ -41,9 +41,33 @@
             <a href="{% url 'comunicacion:hijo_eliminar' h.pk %}"
                class="text-xs text-red-600 hover:text-red-800 underline underline-offset-2">Eliminar</a>
           </div>
-        </li>
+        </div>
+        {% else %}
+        <!-- Hijo sin nombre: se invita a completar -->
+        <div class="bg-white border border-amber-200 rounded-lg p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-base font-semibold text-slate-900">Hijo/a en {{ h.grado }}</div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <a href="{% url 'comunicacion:hijo_editar' h.pk %}"
+                 class="text-xs text-slate-600 hover:text-slate-900 underline underline-offset-2">Editar</a>
+              <a href="{% url 'comunicacion:hijo_eliminar' h.pk %}"
+                 class="text-xs text-red-600 hover:text-red-800 underline underline-offset-2">Eliminar</a>
+            </div>
+          </div>
+          <div class="mt-3 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <span class="text-xs text-amber-800">
+              Falta completar el nombre.
+              <a href="{% url 'comunicacion:hijo_editar' h.pk %}" class="font-semibold underline">Agregarlo ahora</a>
+              <span class="text-amber-600">(es opcional)</span>
+            </span>
+          </div>
+        </div>
+        {% endif %}
       {% endfor %}
-    </ul>
+    </div>
   {% else %}
     <div class="bg-white text-center py-10 text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg">
       <div class="text-4xl mb-2">🎒</div>
