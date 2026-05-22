@@ -114,12 +114,33 @@
                     <a href="/admin/" class="ml-3 text-xs text-gray-400 hover:text-gray-600">admin</a>
                     {% endif %}
                     <a href="{% url 'comunicacion:logout' %}" class="ml-3 text-sm text-gray-500 hover:text-gray-700">Salir</a>
-                {% else %}
-                    <span class="text-sm text-gray-700">Hola, {% if request.user.first_name %}{{ request.user.first_name }}{% else %}usuario{% endif %} 👋</span>
-                    <a href="{% url 'comunicacion:mi_cuenta' %}" class="ml-3 text-sm text-slate-600 hover:text-slate-900 underline underline-offset-2">Mi cuenta</a>
-                    <a href="{% url 'comunicacion:mis_grados' %}" class="ml-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium">Mis grados</a>
-                    <a href="{% url 'comunicacion:logout' %}" class="ml-3 text-sm text-gray-500 hover:text-gray-700">Salir</a>
-                {% endif %}
+                                {% else %}
+                                        <span class="text-sm text-gray-700">Hola, {% if request.user.first_name %}{{ request.user.first_name }}{% else %}usuario{% endif %} 👋</span>
+
+                                        <!-- Campanita de notificaciones del padre -->
+                                        <div class="relative ml-3">
+                                            <button type="button" id="btn-campana-padre" class="relative p-1.5 rounded-lg hover:bg-gray-100 transition">
+                                                <span class="text-xl">🔔</span>
+                                                <span id="campana-padre-badge" class="hidden absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1"></span>
+                                            </button>
+                                            <div id="campana-padre-panel" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-[70vh] overflow-y-auto">
+                                                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                                                    <span class="font-semibold text-gray-900 text-sm">Respuestas de docentes</span>
+                                                    <button type="button" id="btn-cerrar-campana-padre" class="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+                                                </div>
+                                                <div id="campana-padre-lista" class="divide-y divide-gray-50">
+                                                    <p class="px-4 py-3 text-xs text-gray-400 italic">No tenés respuestas nuevas.</p>
+                                                </div>
+                                                <div class="px-4 py-3 border-t border-gray-100">
+                                                    <a href="{% url 'comunicacion:mi_cuenta' %}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Ver todas mis consultas</a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <a href="{% url 'comunicacion:mi_cuenta' %}" class="ml-3 text-sm text-slate-600 hover:text-slate-900 underline underline-offset-2">Mi cuenta</a>
+                                        <a href="{% url 'comunicacion:mis_grados' %}" class="ml-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium">Mis grados</a>
+                                        <a href="{% url 'comunicacion:logout' %}" class="ml-3 text-sm text-gray-500 hover:text-gray-700">Salir</a>
+                                {% endif %}
             </div>
         </div>
     </header>
@@ -145,6 +166,63 @@
 
     {% include "_footer_tecnosoft.html" %}
 
-    {% block extra_js %}{% endblock %}
+        {% if request.user.is_authenticated and not request.user.is_staff %}
+        <script>
+        (function() {
+            var btn = document.getElementById('btn-campana-padre');
+            var panel = document.getElementById('campana-padre-panel');
+            var btnCerrar = document.getElementById('btn-cerrar-campana-padre');
+            var badge = document.getElementById('campana-padre-badge');
+            var lista = document.getElementById('campana-padre-lista');
+            if (!btn || !panel) return;
+
+            var urlJson = "{% url 'comunicacion:notificaciones_padre_json' %}";
+
+            function cerrar() { panel.classList.add('hidden'); }
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                panel.classList.toggle('hidden');
+            });
+            if (btnCerrar) btnCerrar.addEventListener('click', cerrar);
+            document.addEventListener('click', function(e) {
+                if (!panel.contains(e.target) && !btn.contains(e.target)) cerrar();
+            });
+
+            function refrescar() {
+                fetch(urlJson, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(data) {
+                        if (!data) return;
+                        if (data.total > 0) {
+                            badge.textContent = data.total > 99 ? '99+' : data.total;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                        lista.innerHTML = '';
+                        if (data.consultas && data.consultas.length) {
+                            data.consultas.forEach(function(c) {
+                                var a = document.createElement('a');
+                                a.href = c.url;
+                                a.className = 'block px-4 py-2.5 hover:bg-gray-50';
+                                a.innerHTML =
+                                    '<p class="text-sm font-medium text-gray-900">Respuesta del docente</p>' +
+                                    '<p class="text-xs text-gray-500 truncate">Sobre: ' + c.comunicado + '</p>' +
+                                    '<p class="text-[10px] text-gray-400 mt-0.5">' + c.hora + '</p>';
+                                lista.appendChild(a);
+                            });
+                        } else {
+                            lista.innerHTML = '<p class="px-4 py-3 text-xs text-gray-400 italic">No tenés respuestas nuevas.</p>';
+                        }
+                    })
+                    .catch(function() { /* silencioso */ });
+            }
+
+            refrescar();
+            setInterval(refrescar, 20000);
+        })();
+        </script>
+        {% endif %}
+        {% block extra_js %}{% endblock %}
 </body>
 </html>
