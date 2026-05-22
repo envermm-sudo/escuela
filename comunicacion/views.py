@@ -675,3 +675,50 @@ def consulta_hilo_view(request, pk):
         'consulta': consulta,
         'mensajes_hilo': mensajes_hilo,
     })
+
+
+
+@login_required(login_url='comunicacion:login_padre')
+def notificaciones_padre_json(request):
+    """
+    Endpoint JSON para la campanita del padre.
+    Devuelve las consultas del padre con respuesta del docente sin leer.
+    'Sin leer' = el último mensaje del hilo es del docente y es posterior
+    a la última vez que el padre abrió ese hilo (padre_leyo).
+    """
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from .models import ConsultaComunicado
+
+    perfil_padre = getattr(request.user, 'perfil_padre', None)
+    if perfil_padre is None:
+        return JsonResponse({'total': 0, 'consultas': []})
+
+    consultas_qs = (
+        ConsultaComunicado.objects
+        .filter(padre=request.user)
+        .select_related('comunicado')
+        .order_by('-actualizada')
+    )
+
+    items = []
+    for c in consultas_qs:
+        ultimo = c.mensajes.order_by('-creado').first()
+        if ultimo is None:
+            continue
+        # Solo cuenta si el último mensaje es del docente
+        if not ultimo.es_del_docente:
+            continue
+        # Y si el padre no lo leyó todavía
+        no_leido = (c.padre_leyo is None) or (ultimo.creado > c.padre_leyo)
+        if no_leido:
+            items.append({
+                'comunicado': c.comunicado.titulo,
+                'hora': timezone.localtime(ultimo.creado).strftime('%d/%m %H:%M'),
+                'url': f'/comunicado/{c.comunicado.id}/consulta/',
+            })
+
+    return JsonResponse({
+        'total': len(items),
+        'consultas': items,
+    })

@@ -18,6 +18,7 @@ urlpatterns = [
     path('recuperar-clave/<str:token>/', views.recuperar_clave_confirmar_view, name='recuperar_clave_confirmar'),
     # Mi cuenta del padre
     path('mi-cuenta/', views.mi_cuenta_padre_view, name='mi_cuenta'),
+    path('notificaciones/json/', views.notificaciones_padre_json, name='notificaciones_padre_json'),
     path('mi-cuenta/hijos/nuevo/', views.hijo_crear_view, name='hijo_crear'),
     path('mi-cuenta/hijos/<int:pk>/editar/', views.hijo_editar_view, name='hijo_editar'),
     path('mi-cuenta/hijos/<int:pk>/eliminar/', views.hijo_eliminar_view, name='hijo_eliminar'),
