@@ -98,24 +98,24 @@ class RegistroPadreForm(forms.Form):
             telefono=data.get('telefono', ''),
             dni=data.get('dni', ''),
         )
-        perfil.hijos_grados.set(data['grados'])
-        # Crear HijoPadre genérico por cada grado (modelo nuevo, fuente de verdad)
+        # Crear un HijoPadre por cada grado elegido (sin nombre, es opcional)
         from .models import HijoPadre
         for grado in data['grados']:
             HijoPadre.objects.get_or_create(
                 padre=perfil,
                 grado=grado,
-                defaults={'nombre': 'Hijo/a'},
+                defaults={'nombre': ''},
             )
         return user, perfil
 
 
 class MisGradosForm(forms.Form):
-    """Permite al padre cambiar los grados que sigue."""
+    """OBSOLETO: la gestión de grados ahora se hace desde Mi cuenta (HijoPadre)."""
 
     grados = forms.ModelMultipleChoiceField(
         queryset=Grado.objects.filter(activo=True).order_by('orden', 'nombre', 'turno'),
         label='Grados que seguís',
+        required=False,
         widget=forms.CheckboxSelectMultiple
     )
 

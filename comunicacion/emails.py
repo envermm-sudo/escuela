@@ -129,13 +129,10 @@ def notificar_comunicado_a_padres(comunicado):
         logger.info('Comunicado %s sin grados destinatarios — no se notifica', comunicado.pk)
         return 0
 
-    # Padres con hijos en alguno de los grados (modelo nuevo O legacy)
+    # Padres con hijos en alguno de los grados destinatarios
     padres_qs = (
         PerfilPadre.objects
-        .filter(
-            Q(hijos__grado_id__in=grados_ids) |
-            Q(hijos_grados__id__in=grados_ids)
-        )
+        .filter(hijos__grado_id__in=grados_ids)
         .exclude(tipo_notificacion='ninguno')
         .exclude(notif_email=False)
         .exclude(user__email='')

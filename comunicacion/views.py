@@ -151,7 +151,7 @@ def registro_padre_view(request):
             )
             if user_auth is not None:
                 auth_login(request, user_auth)
-                grados_lista = ', '.join(str(g) for g in perfil.hijos_grados.all())
+                grados_lista = ', '.join(str(h.grado) for h in perfil.hijos.select_related('grado'))
                 messages.success(
                     request,
                     f'¡Bienvenido/a, {user.first_name}! Ahora seguís: {grados_lista}'
@@ -204,29 +204,8 @@ def logout_view(request):
 
 @login_required(login_url='comunicacion:login_padre')
 def mis_grados_view(request):
-    """Permite al padre cambiar los grados que sigue."""
-    try:
-        perfil = request.user.perfil_padre
-    except PerfilPadre.DoesNotExist:
-        messages.error(request, 'Esta sección es solo para padres registrados.')
-        return redirect('comunicacion:landing')
-
-    if request.method == 'POST':
-        form = MisGradosForm(request.POST)
-        if form.is_valid():
-            grados_nuevos = form.cleaned_data['grados']
-            perfil.hijos_grados.set(grados_nuevos)
-            # Sincronizar HijoPadre con los grados elegidos
-            from .models import HijoPadre
-            HijoPadre.objects.filter(padre=perfil).exclude(grado__in=grados_nuevos).delete()
-            for g in grados_nuevos:
-                HijoPadre.objects.get_or_create(padre=perfil, grado=g, defaults={'nombre': 'Hijo/a'})
-            messages.success(request, 'Grados actualizados correctamente.')
-            return redirect('comunicacion:mis_grados')
-    else:
-        form = MisGradosForm(initial={'grados': perfil.hijos_grados.values_list('pk', flat=True)})
-
-    return render(request, 'comunicacion/mis_grados.html', {'form': form, 'perfil': perfil})
+    """OBSOLETO: la gestión de grados ahora se hace desde Mi cuenta. Redirige allá."""
+    return redirect('comunicacion:mi_cuenta')
 
 
 # ====================================================================
