@@ -665,6 +665,10 @@ def consulta_hilo_view(request, pk):
     mensajes_hilo = []
     if consulta is not None:
         mensajes_hilo = consulta.mensajes.select_related('autor').order_by('creado')
+        # Marcar que el padre leyó este hilo
+        from django.utils import timezone
+        consulta.padre_leyo = timezone.now()
+        consulta.save(update_fields=['padre_leyo'])
 
     return render(request, 'comunicacion/consulta_hilo.html', {
         'comunicado': comunicado,

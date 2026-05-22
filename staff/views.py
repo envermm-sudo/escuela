@@ -1465,6 +1465,11 @@ def consulta_detalle(request, pk):
 
     mensajes_hilo = consulta.mensajes.select_related('autor').order_by('creado')
 
+    # Marcar que el docente leyó este hilo
+    from django.utils import timezone
+    consulta.docente_leyo = timezone.now()
+    consulta.save(update_fields=['docente_leyo'])
+
     return render(request, 'staff/consulta_detalle.html', {
         'consulta': consulta,
         'mensajes_hilo': mensajes_hilo,
