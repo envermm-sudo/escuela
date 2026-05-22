@@ -20,7 +20,14 @@
       <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold">Respondida</span>
       {% endif %}
     </div>
-    <p class="text-xs text-gray-500 mb-4">Sobre el comunicado: <strong>{{ consulta.comunicado.titulo }}</strong></p>
+    <p class="text-xs text-gray-500 mb-1">Sobre el comunicado: <strong>{{ consulta.comunicado.titulo }}</strong></p>
+    <p class="text-xs mb-4">
+      {% if consulta.padre_leyo %}
+        <span class="text-emerald-600">✓✓ La familia leyó la conversación</span>
+      {% else %}
+        <span class="text-gray-400">La familia todavía no abrió la conversación</span>
+      {% endif %}
+    </p>
 
     <div class="space-y-3 mb-4">
       {% for msg in mensajes_hilo %}
