@@ -730,3 +730,20 @@ def notificaciones_padre_json(request):
         'total': len(items),
         'consultas': items,
     })
+
+
+@login_required(login_url='comunicacion:login_padre')
+def mis_hijos_view(request):
+    """Página propia para que el padre vea y gestione sus hijos/as."""
+    try:
+        perfil = request.user.perfil_padre
+    except PerfilPadre.DoesNotExist:
+        messages.error(request, 'Esta sección es solo para padres registrados.')
+        return redirect('comunicacion:landing')
+
+    hijos = perfil.hijos.select_related('grado').order_by('nombre')
+
+    return render(request, 'comunicacion/mis_hijos.html', {
+        'perfil': perfil,
+        'hijos': hijos,
+    })
