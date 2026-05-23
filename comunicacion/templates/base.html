@@ -124,15 +124,20 @@
                                                 <span id="campana-padre-badge" class="hidden absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1"></span>
                                             </button>
                                             <div id="campana-padre-panel" class="hidden fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-[70vh] overflow-y-auto">
-                                                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                                                    <span class="font-semibold text-gray-900 text-sm">Respuestas de docentes</span>
-                                                    <button type="button" id="btn-cerrar-campana-padre" class="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+                                                <div class="px-4 py-2 bg-blue-50 border-b border-blue-100">
+                                                    <span class="text-xs font-semibold text-blue-800 uppercase tracking-wide">📢 Avisos nuevos</span>
+                                                </div>
+                                                <div id="campana-padre-avisos" class="divide-y divide-gray-50">
+                                                    <p class="px-4 py-3 text-xs text-gray-400 italic">No hay avisos nuevos.</p>
+                                                </div>
+                                                <div class="px-4 py-2 bg-emerald-50 border-b border-emerald-100">
+                                                    <span class="text-xs font-semibold text-emerald-800 uppercase tracking-wide">💬 Respuestas de docentes</span>
                                                 </div>
                                                 <div id="campana-padre-lista" class="divide-y divide-gray-50">
                                                     <p class="px-4 py-3 text-xs text-gray-400 italic">No tenés respuestas nuevas.</p>
                                                 </div>
                                                 <div class="px-4 py-3 border-t border-gray-100">
-                                                    <a href="{% url 'comunicacion:mi_cuenta' %}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Ver todas mis consultas</a>
+                                                    <a href="{% url 'comunicacion:mis_consultas' %}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Ver todas mis consultas</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -189,6 +194,8 @@
                 if (!panel.contains(e.target) && !btn.contains(e.target)) cerrar();
             });
 
+            var avisos = document.getElementById('campana-padre-avisos');
+
             function refrescar() {
                 fetch(urlJson, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                     .then(function(r) { return r.ok ? r.json() : null; })
@@ -200,6 +207,24 @@
                         } else {
                             badge.classList.add('hidden');
                         }
+
+                        // Sección avisos nuevos
+                        avisos.innerHTML = '';
+                        if (data.avisos && data.avisos.length) {
+                            data.avisos.forEach(function(av) {
+                                var a = document.createElement('a');
+                                a.href = av.url;
+                                a.className = 'block px-4 py-2.5 hover:bg-gray-50';
+                                a.innerHTML =
+                                    '<p class="text-sm font-medium text-gray-900 truncate">' + av.titulo + '</p>' +
+                                    '<p class="text-[10px] text-gray-400 mt-0.5">' + av.hora + '</p>';
+                                avisos.appendChild(a);
+                            });
+                        } else {
+                            avisos.innerHTML = '<p class="px-4 py-3 text-xs text-gray-400 italic">No hay avisos nuevos.</p>';
+                        }
+
+                        // Sección respuestas de docentes
                         lista.innerHTML = '';
                         if (data.consultas && data.consultas.length) {
                             data.consultas.forEach(function(c) {
