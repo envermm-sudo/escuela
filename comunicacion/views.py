@@ -83,6 +83,16 @@ def landing_view(request):
 def muro_grado_view(request, grado_slug):
     grado = get_object_or_404(Grado, slug=grado_slug, activo=True)
 
+    # Registrar que el padre vio este muro (para la campanita de avisos nuevos)
+    if request.user.is_authenticated and not request.user.is_staff:
+        perfil_padre = getattr(request.user, 'perfil_padre', None)
+        if perfil_padre is not None:
+            from .models import VistaMuroPadre
+            VistaMuroPadre.objects.update_or_create(
+                padre=request.user,
+                grado=grado,
+            )
+
     from django.utils import timezone
     hoy = timezone.localdate()
 
