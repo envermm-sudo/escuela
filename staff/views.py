@@ -1008,7 +1008,7 @@ PASSWORD_RESET_DEFAULT = 'escuela2026'  # Contraseña que se asigna al resetear
 # ================================================================
 # LISTADO DE PERSONAL (unificado: docentes + preceptores + directivos)
 # ================================================================
-@staff_required
+@directivo_o_superuser_required
 def gestion_personal_lista(request):
     """
     Listado unificado de personal.

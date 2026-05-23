@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import F, Q
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -98,6 +98,7 @@ def muro_grado_view(request, grado_slug):
 
     qs_base = (Comunicado.objects
                .filter(grados=grado, activo=True)
+               .annotate(num_imagenes=Count('imagenes'))
                .prefetch_related('imagenes')
                .distinct())
 

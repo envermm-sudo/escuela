@@ -145,7 +145,7 @@
                             <span class="text-gray-300">·</span>
                             {% endif %}
                             <span class="text-xs text-gray-500">📅 {{ c.fecha_publicacion|date:"d M Y · H:i" }}</span>
-                            {% if c.imagenes.exists %}<span class="text-xs text-gray-500">· 🖼️ {{ c.imagenes.count }}</span>{% endif %}
+                            {% if c.num_imagenes %}<span class="text-xs text-gray-500">· 🖼️ {{ c.num_imagenes }}</span>{% endif %}
                             {% if c.archivo_adjunto %}<span class="text-xs text-gray-500">· 📎</span>{% endif %}
                         </div>
 

@@ -30,12 +30,6 @@
   {% endif %}
 </a>
 
-{% if perfil_actual and perfil_actual.rol == 'docente' %}
-<a href="{{ url_asig }}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/asignaciones' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
-  <span>🎓</span> Mis asignaciones
-</a>
-{% endif %}
-
 {% if request.user.is_superuser or es_directivo %}
 <div class="border-t border-gray-200 my-2"></div>
 <div class="px-3 text-xs uppercase text-gray-400 font-semibold tracking-wide">Director</div>
@@ -62,12 +56,6 @@
 
 <a href="{% url 'staff:auditoria' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/auditoria' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
   <span>📋</span> Auditoría
-</a>
-{% endif %}
-
-{% if not request.user.is_superuser and not es_directivo %}
-<a href="{% url 'staff:personal_lista' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg {% if '/staff/personal' in request.path %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
-<span>👥</span> Personal
 </a>
 {% endif %}
 

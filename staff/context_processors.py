@@ -11,16 +11,26 @@ def staff_context(request):
 
     if request.user.is_staff and request.path.startswith('/staff/'):
         try:
-            from comunicacion.models import ConsultaComunicado
+            from django.db.models import OuterRef, Subquery
+            from comunicacion.models import ConsultaComunicado, MensajeConsulta
+
             qs = ConsultaComunicado.objects.all()
             if not request.user.is_superuser:
                 qs = qs.filter(comunicado__autor=request.user)
+
+            ultimo_padre = (
+                MensajeConsulta.objects
+                .filter(consulta=OuterRef('pk'), es_del_docente=False)
+                .order_by('-creado')
+            )
+            qs = qs.annotate(
+                ultimo_padre_creado=Subquery(ultimo_padre.values('creado')[:1])
+            )
             total_consultas = 0
-            for c in qs:
-                ultimo_padre = c.mensajes.filter(es_del_docente=False).order_by('-creado').first()
-                if ultimo_padre is None:
+            for fecha_ultimo, docente_leyo in qs.values_list('ultimo_padre_creado', 'docente_leyo'):
+                if fecha_ultimo is None:
                     continue
-                if c.docente_leyo is not None and ultimo_padre.creado <= c.docente_leyo:
+                if docente_leyo is not None and fecha_ultimo <= docente_leyo:
                     continue
                 total_consultas += 1
             consultas_pendientes_count = total_consultas
@@ -28,22 +38,30 @@ def staff_context(request):
             consultas_pendientes_count = 0
 
         try:
+            from django.db.models import Count, Q, F
             from comunicacion.models import MiembroConversacion
-            total = 0
+
             membresias = (
                 MiembroConversacion.objects
                 .filter(usuario=request.user, activo=True)
-                .select_related('conversacion')
+                .annotate(
+                    nuevos=Count(
+                        'conversacion__mensajes',
+                        filter=(
+                            ~Q(conversacion__mensajes__autor=request.user)
+                            & (
+                                Q(ultima_lectura__isnull=True)
+                                | Q(conversacion__mensajes__creado__gt=F('ultima_lectura'))
+                            )
+                        ),
+                    )
+                )
             )
-            for m in membresias:
-                nuevos = m.conversacion.mensajes.exclude(autor=request.user)
-                if m.ultima_lectura:
-                    nuevos = nuevos.filter(creado__gt=m.ultima_lectura)
-                total += nuevos.count()
-            mensajes_no_leidos_count = total
+            mensajes_no_leidos_count = sum(m.nuevos for m in membresias)
         except Exception:
             mensajes_no_leidos_count = 0
 
+    from .permissions import es_directivo_o_preceptor, get_perfil_docente
     return {
         'es_directivo': es_directivo_o_preceptor(request.user),
         'perfil_actual': get_perfil_docente(request.user),
