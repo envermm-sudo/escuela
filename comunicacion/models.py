@@ -650,3 +650,35 @@ class MensajeInterno(models.Model):
     def __str__(self):
         return f'{self.autor.get_full_name() or self.autor.username} — {self.creado:%d/%m/%Y %H:%M}'
 
+
+# ====================================================================
+# Registro de visitas del padre al muro de cada grado
+# ====================================================================
+class VistaMuroPadre(models.Model):
+    """
+    Guarda la última vez que un padre abrió el muro de un grado.
+    Sirve para saber qué comunicados son "nuevos" (sin ver) para ese padre.
+    """
+    padre = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='vistas_muro',
+    )
+    grado = models.ForeignKey(
+        Grado,
+        on_delete=models.CASCADE,
+        related_name='vistas_padres',
+    )
+    ultima_visita = models.DateTimeField(
+        auto_now=True,
+        help_text='Se actualiza cada vez que el padre abre el muro de este grado.',
+    )
+
+    class Meta:
+        verbose_name = 'Visita al muro'
+        verbose_name_plural = 'Visitas a los muros'
+        unique_together = ('padre', 'grado')
+
+    def __str__(self):
+        return f'{self.padre.username} vio {self.grado} el {self.ultima_visita:%d/%m/%Y %H:%M}'
+
