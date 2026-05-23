@@ -27,6 +27,30 @@
 {% endif %}
 <div class="max-w-5xl mx-auto px-4 pb-10">
 {% if not turno_actual %}
+
+{# BLOQUE DESTACADO: las aulas que sigue el padre logueado #}
+{% if mis_grados %}
+<div class="mb-8">
+  <div class="text-center mb-4">
+    <h2 class="text-base sm:text-lg font-semibold text-gray-800">📚 Las aulas de mis hijos/as</h2>
+    <p class="text-sm text-gray-500 mt-1">Acceso directo a los comunicados de tus aulas</p>
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    {% for g in mis_grados %}
+    <a href="{% url 'comunicacion:muro_grado' g.slug %}"
+       class="group block bg-indigo-50 border border-indigo-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-400 hover:-translate-y-0.5 transition-all text-center">
+      <div class="text-2xl font-bold text-gray-900 group-hover:text-indigo-700">{{ g.nombre }}</div>
+      <div class="text-xs text-gray-500 mt-1">{{ g.get_turno_display }}</div>
+      <span class="inline-block mt-3 text-xs text-indigo-600 group-hover:underline font-medium">Ver aula →</span>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-6 pt-6 border-t border-gray-200">
+    <p class="text-sm text-gray-500">¿Buscás otra aula?</p>
+  </div>
+</div>
+{% endif %}
+
 {# PASO 1: el padre elige el turno #}
 {% if turnos_disponibles %}
 <div class="text-center pt-4 pb-2">

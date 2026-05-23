@@ -58,11 +58,25 @@ def landing_view(request):
                 grados_filtrados = [g for g in todos_grados if g.turno == turno_seleccionado]
                 break
 
+    # Grados que sigue el padre logueado (los grados de sus hijos).
+    # No importa si el hijo tiene nombre o no.
+    mis_grados = []
+    if request.user.is_authenticated and not request.user.is_staff:
+        perfil_padre = getattr(request.user, 'perfil_padre', None)
+        if perfil_padre is not None:
+            grados_ids = (
+                perfil_padre.hijos
+                .values_list('grado_id', flat=True)
+                .distinct()
+            )
+            mis_grados = [g for g in todos_grados if g.id in set(grados_ids)]
+
     return render(request, 'comunicacion/landing.html', {
         'config': config,
         'turnos_disponibles': turnos_disponibles,
         'turno_actual': turno_actual,
         'grados_filtrados': grados_filtrados,
+        'mis_grados': mis_grados,
     })
 
 
