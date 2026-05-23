@@ -723,46 +723,81 @@ def consulta_hilo_view(request, pk):
 @login_required(login_url='comunicacion:login_padre')
 def notificaciones_padre_json(request):
     """
-    Endpoint JSON para la campanita del padre.
-    Devuelve las consultas del padre con respuesta del docente sin leer.
-    'Sin leer' = el último mensaje del hilo es del docente y es posterior
-    a la última vez que el padre abrió ese hilo (padre_leyo).
+    Endpoint JSON para la campanita del padre. Devuelve dos listas:
+    - consultas: respuestas de docentes sin leer.
+    - avisos: comunicados nuevos en los grados del padre, sin ver.
     """
     from django.http import JsonResponse
     from django.utils import timezone
-    from .models import ConsultaComunicado
+    from .models import ConsultaComunicado, Comunicado, VistaMuroPadre
 
     perfil_padre = getattr(request.user, 'perfil_padre', None)
     if perfil_padre is None:
-        return JsonResponse({'total': 0, 'consultas': []})
+        return JsonResponse({'total': 0, 'consultas': [], 'avisos': []})
 
+    # --- Respuestas de docentes sin leer ---
     consultas_qs = (
         ConsultaComunicado.objects
         .filter(padre=request.user)
         .select_related('comunicado')
         .order_by('-actualizada')
     )
-
-    items = []
+    consultas = []
     for c in consultas_qs:
         ultimo = c.mensajes.order_by('-creado').first()
         if ultimo is None:
             continue
-        # Solo cuenta si el último mensaje es del docente
         if not ultimo.es_del_docente:
             continue
-        # Y si el padre no lo leyó todavía
         no_leido = (c.padre_leyo is None) or (ultimo.creado > c.padre_leyo)
         if no_leido:
-            items.append({
+            consultas.append({
                 'comunicado': c.comunicado.titulo,
                 'hora': timezone.localtime(ultimo.creado).strftime('%d/%m %H:%M'),
                 'url': f'/comunicado/{c.comunicado.id}/consulta/',
             })
 
+    # --- Comunicados nuevos sin ver, en los grados del padre ---
+    avisos = []
+    grados_ids = list(
+        perfil_padre.hijos.values_list('grado_id', flat=True).distinct()
+    )
+    if grados_ids:
+        # Última visita del padre a cada grado
+        visitas = {
+            v.grado_id: v.ultima_visita
+            for v in VistaMuroPadre.objects.filter(
+                padre=request.user, grado_id__in=grados_ids
+            )
+        }
+        comunicados_qs = (
+            Comunicado.objects
+            .filter(grados__id__in=grados_ids)
+            .select_related('materia')
+            .order_by('-fecha_publicacion')
+            .distinct()
+        )
+        for com in comunicados_qs[:30]:
+            # ¿Es nuevo para alguno de los grados del padre?
+            es_nuevo = False
+            for gid in com.grados.values_list('id', flat=True):
+                if gid not in grados_ids:
+                    continue
+                visto = visitas.get(gid)
+                if visto is None or com.fecha_publicacion > visto:
+                    es_nuevo = True
+                    break
+            if es_nuevo:
+                avisos.append({
+                    'titulo': com.titulo,
+                    'hora': timezone.localtime(com.fecha_publicacion).strftime('%d/%m %H:%M'),
+                    'url': f'/comunicado/{com.id}/',
+                })
+
     return JsonResponse({
-        'total': len(items),
-        'consultas': items,
+        'total': len(consultas) + len(avisos),
+        'consultas': consultas,
+        'avisos': avisos,
     })
 
 
