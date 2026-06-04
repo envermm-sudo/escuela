@@ -87,10 +87,12 @@ def muro_grado_view(request, grado_slug):
     if request.user.is_authenticated and not request.user.is_staff:
         perfil_padre = getattr(request.user, 'perfil_padre', None)
         if perfil_padre is not None:
+            from django.utils import timezone
             from .models import VistaMuroPadre
             VistaMuroPadre.objects.update_or_create(
                 padre=request.user,
                 grado=grado,
+                defaults={'ultima_visita': timezone.now()},
             )
 
     from django.utils import timezone
@@ -350,6 +352,26 @@ def comunicado_detalle_view(request, pk):
 
     # Grado de referencia para ofrecer boton de volver al muro.
     grado_muro = comunicado.grados.order_by('orden', 'nombre').first()
+
+    # Si es un padre registrado, marcar como vistos los grados de este
+    # comunicado que el padre sigue, para que baje el contador de la campanita.
+    if request.user.is_authenticated and not request.user.is_staff:
+        perfil_padre = getattr(request.user, 'perfil_padre', None)
+        if perfil_padre is not None:
+            from django.utils import timezone
+            from .models import VistaMuroPadre, HijoPadre
+            grados_padre = set(
+                HijoPadre.objects
+                .filter(padre=perfil_padre)
+                .values_list('grado_id', flat=True)
+            )
+            for g in comunicado.grados.all():
+                if g.id in grados_padre:
+                    VistaMuroPadre.objects.update_or_create(
+                        padre=request.user,
+                        grado=g,
+                        defaults={'ultima_visita': timezone.now()},
+                    )
 
     return render(request, 'comunicacion/comunicado_detalle.html', {
         'comunicado': comunicado,
