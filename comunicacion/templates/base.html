@@ -246,6 +246,15 @@
 
             refrescar();
             setInterval(refrescar, 60000);
+
+            // Al volver con el botón "atrás", el navegador puede mostrar la
+            // página guardada en caché (bfcache) con el badge viejo.
+            // Forzamos un refresco para que el contador quede al día.
+            window.addEventListener('pageshow', function(e) {
+                if (e.persisted) {
+                    refrescar();
+                }
+            });
         })();
         </script>
         {% endif %}
